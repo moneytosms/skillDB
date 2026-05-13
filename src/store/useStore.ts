@@ -91,11 +91,18 @@ export type GeneratedResume = {
   createdAt: string;
 };
 
+export type ProfileBackup = {
+  id: string;
+  timestamp: string;
+  profile: ProfileData;
+};
+
 interface State {
   profile: ProfileData;
   apiKeys: ApiKeys;
   resumes: GeneratedResume[];
   preferences: AppPreferences;
+  backups: ProfileBackup[];
   
   // Actions
   updatePersonalInfo: (data: Partial<PersonalInfo>) => void;
@@ -127,6 +134,10 @@ interface State {
   importData: (data: any) => void;
   mergeProfileData: (data: any) => void;
   updatePreferences: (prefs: Partial<AppPreferences>) => void;
+  
+  createBackup: () => void;
+  restoreBackup: (id: string) => void;
+  deleteBackup: (id: string) => void;
 }
 
 const defaultPersonalInfo: PersonalInfo = {
@@ -163,6 +174,7 @@ export const useStore = create<State>()(
         aiModel: 'gemini-2.5-pro',
       },
       resumes: [],
+      backups: [],
 
       updatePersonalInfo: (data) =>
         set((state) => ({
@@ -324,16 +336,48 @@ export const useStore = create<State>()(
           const mergeByFields = (existingArray: any[], newArray: any[], fields: string[]) => {
             const merged = [...existingArray];
             for (const newItem of newArray) {
-              const isDuplicate = merged.some(existingItem => 
+              const duplicateIndex = merged.findIndex(existingItem => 
                 fields.every(field => {
                   const val1 = String(existingItem[field] || '').toLowerCase().trim();
                   const val2 = String(newItem[field] || '').toLowerCase().trim();
                   if (!val1 && !val2) return true;
                   if (!val1 || !val2) return false;
+                  // Handle partial matches like "Warpclean" vs "Warpclean - Python CLI"
                   return val1.includes(val2) || val2.includes(val1);
                 })
               );
-              if (!isDuplicate) {
+
+              if (duplicateIndex !== -1) {
+                // Merge the items
+                const existing = merged[duplicateIndex];
+                
+                // For strings, take the longer one or merge logic
+                const mergedItem = { ...existing };
+                
+                Object.keys(newItem).forEach(key => {
+                  if (key === 'id') return;
+                  if (Array.isArray(existing[key]) && Array.isArray(newItem[key])) {
+                     // Union arrays (e.g. bullets or technologies)
+                     const combined = [...existing[key]];
+                     newItem[key].forEach((item: any) => {
+                       const itemStr = String(item).toLowerCase().trim();
+                       if (!combined.some(c => String(c).toLowerCase().trim() === itemStr)) {
+                         combined.push(item);
+                       }
+                     });
+                     mergedItem[key] = combined;
+                  } else if (typeof existing[key] === 'string' && typeof newItem[key] === 'string') {
+                     // Take the longer string
+                     if ((newItem[key] as string).length > (existing[key] as string).length) {
+                       mergedItem[key] = newItem[key];
+                     }
+                  } else if (!existing[key] && newItem[key]) {
+                     mergedItem[key] = newItem[key];
+                  }
+                });
+
+                merged[duplicateIndex] = mergedItem;
+              } else {
                 merged.push({ ...newItem, id: newItem.id || uuidv4() });
               }
             }
@@ -372,6 +416,31 @@ export const useStore = create<State>()(
             }
           };
         }),
+      
+      createBackup: () => 
+        set((state) => {
+          const newBackup: ProfileBackup = {
+            id: uuidv4(),
+            timestamp: new Date().toISOString(),
+            profile: JSON.parse(JSON.stringify(state.profile))
+          };
+          const newBackups = [newBackup, ...(state.backups || [])].slice(0, 5); // Keep max 5
+          return { backups: newBackups };
+        }),
+        
+      restoreBackup: (id: string) => 
+        set((state) => {
+          const backup = (state.backups || []).find(b => b.id === id);
+          if (backup) {
+            return { profile: JSON.parse(JSON.stringify(backup.profile)) };
+          }
+          return state;
+        }),
+        
+      deleteBackup: (id: string) =>
+        set((state) => ({
+          backups: (state.backups || []).filter((b) => b.id !== id),
+        })),
     }),
     {
       name: 'skilldb-storage',

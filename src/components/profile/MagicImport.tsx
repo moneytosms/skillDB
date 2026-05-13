@@ -55,6 +55,10 @@ export function MagicImport() {
 
     try {
       const data = await extractProfileFromText(text, profile);
+      
+      // Auto-backup current state before magic import
+      useStore.getState().createBackup();
+      
       mergeProfileData(data);
       setSuccess(true);
       setText(''); // clear text after successful import

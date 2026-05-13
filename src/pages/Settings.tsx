@@ -178,7 +178,7 @@ export default function Settings() {
         </div>
       </section>
 
-      <section>
+      <section className="mb-12">
         <div className="flex items-center gap-2 mb-4">
           <FileJson className="text-blue-600 dark:text-blue-400" size={24} />
           <h2 className="text-xl font-semibold">Data Portable Vault</h2>
@@ -216,6 +216,54 @@ export default function Settings() {
               />
             </label>
           </div>
+        </div>
+      </section>
+
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <Shield className="text-blue-600 dark:text-blue-400" size={24} />
+          <h2 className="text-xl font-semibold">Auto-Backups</h2>
+        </div>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+          The app automatically saves a backup of your profile right before you do a Magic Import. If something doesn't look right, you can restore a previous version from here.
+        </p>
+
+        <div className="bg-white dark:bg-[#1A1A1A] border border-[#E5E5E5] dark:border-gray-800 rounded-xl p-4 shadow-sm flex flex-col items-start gap-2">
+          {!(useStore((state) => state.backups)?.length > 0) ? (
+            <p className="text-sm text-gray-500 dark:text-gray-400 p-2">No backups available yet. Try using Magic Import!</p>
+          ) : (
+             <div className="w-full flex flex-col gap-2">
+                {useStore((state) => state.backups)?.map(backup => (
+                   <div key={backup.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border border-gray-100 dark:border-gray-800 rounded-lg gap-3">
+                      <div>
+                        <p className="text-sm font-medium">Backup Tool</p>
+                        <p className="text-xs text-gray-500">{new Date(backup.timestamp).toLocaleString()}</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                         <button 
+                           className="text-xs bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-1.5 rounded-md transition-colors font-medium"
+                           onClick={() => {
+                             if(window.confirm('Are you sure you want to restore this backup? Your current profile will be overwritten.')) {
+                               useStore.getState().restoreBackup(backup.id);
+                               alert('Backup restored!');
+                             }
+                           }}
+                         >
+                           Restore
+                         </button>
+                         <button 
+                           className="text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-3 py-1.5 rounded-md transition-colors"
+                           onClick={() => {
+                              useStore.getState().deleteBackup(backup.id)
+                           }}
+                         >
+                           Delete
+                         </button>
+                      </div>
+                   </div>
+                ))}
+             </div>
+          )}
         </div>
       </section>
     </div>

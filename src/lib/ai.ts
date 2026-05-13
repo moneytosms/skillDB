@@ -10,23 +10,10 @@ export async function extractProfileFromText(textContext: string, existingProfil
   const provider = preferences.aiProvider || 'gemini';
   const model = preferences.aiModel || (provider === 'gemini' ? 'gemini-3.1-pro-preview' : 'llama-3.3-70b-versatile');
 
-  let existingIndex = '';
-  if (existingProfile) {
-    existingIndex = `
-  EXISTING PROFILE ENTRIES (DO NOT DUPLICATE THESE):
-  - Experience: ${existingProfile.experience?.map((e: any) => `${e.role} at ${e.company}`).join(', ') || 'None'}
-  - Education: ${existingProfile.education?.map((e: any) => `${e.degree} at ${e.institution}`).join(', ') || 'None'}
-  - Projects: ${existingProfile.projects?.map((e: any) => e.name).join(', ') || 'None'}
-  
-  IMPORTANT INSTRUCTION ABOUT DUPLICATES:
-  If a project, experience, or education item in the Raw Text matches or is a very similar variation of an item in the EXISTING PROFILE ENTRIES list above, DO NOT include it in your extraction. We are doing a merge, and we only want NEW items extracted.
-    `;
-  }
-
   const prompt = `
   You are an expert data extractor. An applicant has provided their resume or LinkedIn profile text. 
-  Your goal is to parse this raw text and extract their detailed profile data into a strict JSON schema.
-  ${existingIndex}
+  Your goal is to parse this raw text and extract their detailed profile data into a strict JSON format.
+  Extract absolutely everything found in the Raw Text.
 
   Raw Text to Parse:
   """
