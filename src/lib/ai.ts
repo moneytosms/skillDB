@@ -5,14 +5,28 @@ import Anthropic from '@anthropic-ai/sdk';
 import { useStore } from '../store/useStore';
 import { v4 as uuidv4 } from 'uuid';
 
-export async function extractProfileFromText(textContext: string): Promise<any> {
+export async function extractProfileFromText(textContext: string, existingProfile?: any): Promise<any> {
   const { apiKeys, preferences } = useStore.getState();
   const provider = preferences.aiProvider || 'gemini';
   const model = preferences.aiModel || (provider === 'gemini' ? 'gemini-3.1-pro-preview' : 'llama-3.3-70b-versatile');
 
+  let existingIndex = '';
+  if (existingProfile) {
+    existingIndex = `
+  EXISTING PROFILE ENTRIES (DO NOT DUPLICATE THESE):
+  - Experience: ${existingProfile.experience?.map((e: any) => `${e.role} at ${e.company}`).join(', ') || 'None'}
+  - Education: ${existingProfile.education?.map((e: any) => `${e.degree} at ${e.institution}`).join(', ') || 'None'}
+  - Projects: ${existingProfile.projects?.map((e: any) => e.name).join(', ') || 'None'}
+  
+  IMPORTANT INSTRUCTION ABOUT DUPLICATES:
+  If a project, experience, or education item in the Raw Text matches or is a very similar variation of an item in the EXISTING PROFILE ENTRIES list above, DO NOT include it in your extraction. We are doing a merge, and we only want NEW items extracted.
+    `;
+  }
+
   const prompt = `
   You are an expert data extractor. An applicant has provided their resume or LinkedIn profile text. 
   Your goal is to parse this raw text and extract their detailed profile data into a strict JSON schema.
+  ${existingIndex}
 
   Raw Text to Parse:
   """
@@ -184,6 +198,8 @@ export async function generateJSONResume(jobDescription: string, profileContext:
   ${profileContext}
 
   Please generate a polished, professional resume structured EXACTLY according to the following JSON schema. Do not output anything other than valid JSON. 
+  
+  CRITICAL: The generated resume MUST fit onto a single page. Be extremely concise. Select ONLY the most relevant 2-4 experiences, 2-3 projects, and keep bullet points punchy and impactful (maximum 3-4 bullets per role). Do not include filler words.
   
   {
     "personalInfo": {

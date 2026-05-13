@@ -12,7 +12,7 @@ export function MagicImport() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const { mergeProfileData, preferences } = useStore();
+  const { mergeProfileData, preferences, profile } = useStore();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -54,7 +54,7 @@ export function MagicImport() {
     setSuccess(false);
 
     try {
-      const data = await extractProfileFromText(text);
+      const data = await extractProfileFromText(text, profile);
       mergeProfileData(data);
       setSuccess(true);
       setText(''); // clear text after successful import

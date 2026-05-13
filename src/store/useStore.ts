@@ -325,9 +325,13 @@ export const useStore = create<State>()(
             const merged = [...existingArray];
             for (const newItem of newArray) {
               const isDuplicate = merged.some(existingItem => 
-                fields.every(field => 
-                  String(existingItem[field] || '').toLowerCase().trim() === String(newItem[field] || '').toLowerCase().trim()
-                )
+                fields.every(field => {
+                  const val1 = String(existingItem[field] || '').toLowerCase().trim();
+                  const val2 = String(newItem[field] || '').toLowerCase().trim();
+                  if (!val1 && !val2) return true;
+                  if (!val1 || !val2) return false;
+                  return val1.includes(val2) || val2.includes(val1);
+                })
               );
               if (!isDuplicate) {
                 merged.push({ ...newItem, id: newItem.id || uuidv4() });
