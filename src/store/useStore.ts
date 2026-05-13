@@ -34,6 +34,8 @@ export type Education = {
   startDate: string;
   endDate: string;
   current: boolean;
+  cgpa?: string;
+  percentage?: string;
 };
 
 export type Skill = {
@@ -59,6 +61,8 @@ export type PersonalInfo = {
   website: string;
   linkedin: string;
   github: string;
+  leetcode: string;
+  codeforces: string;
   summary: string;
 };
 
@@ -110,22 +114,27 @@ interface State {
   addExperience: (exp: Omit<Experience, 'id'>) => void;
   updateExperience: (id: string, exp: Partial<Experience>) => void;
   deleteExperience: (id: string) => void;
+  moveExperience: (id: string, direction: 'up' | 'down') => void;
 
   addProject: (proj: Omit<Project, 'id'>) => void;
   updateProject: (id: string, proj: Partial<Project>) => void;
   deleteProject: (id: string) => void;
+  moveProject: (id: string, direction: 'up' | 'down') => void;
 
   addEducation: (edu: Omit<Education, 'id'>) => void;
   updateEducation: (id: string, edu: Partial<Education>) => void;
   deleteEducation: (id: string) => void;
+  moveEducation: (id: string, direction: 'up' | 'down') => void;
 
   addSkill: (skill: Omit<Skill, 'id'>) => void;
   updateSkill: (id: string, skill: Partial<Skill>) => void;
   deleteSkill: (id: string) => void;
+  moveSkill: (id: string, direction: 'up' | 'down') => void;
 
   addMiscItem: (item: Omit<MiscItem, 'id'>) => void;
   updateMiscItem: (id: string, item: Partial<MiscItem>) => void;
   deleteMiscItem: (id: string) => void;
+  moveMiscItem: (id: string, direction: 'up' | 'down') => void;
 
   updateApiKeys: (keys: Partial<ApiKeys>) => void;
   saveResume: (resume: Omit<GeneratedResume, 'id' | 'createdAt'>) => void;
@@ -148,7 +157,25 @@ const defaultPersonalInfo: PersonalInfo = {
   website: '',
   linkedin: '',
   github: '',
+  leetcode: '',
+  codeforces: '',
   summary: '',
+};
+
+const moveItem = <T extends { id: string }>(array: T[], id: string, direction: 'up' | 'down'): T[] => {
+  const idx = array.findIndex(i => i.id === id);
+  if (idx < 0) return array;
+  if (direction === 'up' && idx > 0) {
+    const newArr = [...array];
+    [newArr[idx - 1], newArr[idx]] = [newArr[idx], newArr[idx - 1]];
+    return newArr;
+  }
+  if (direction === 'down' && idx < array.length - 1) {
+    const newArr = [...array];
+    [newArr[idx + 1], newArr[idx]] = [newArr[idx], newArr[idx + 1]];
+    return newArr;
+  }
+  return array;
 };
 
 export const useStore = create<State>()(
@@ -205,6 +232,13 @@ export const useStore = create<State>()(
             experience: state.profile.experience.filter((e) => e.id !== id),
           },
         })),
+      moveExperience: (id, direction) =>
+        set((state) => ({
+          profile: {
+            ...state.profile,
+            experience: moveItem(state.profile.experience, id, direction),
+          },
+        })),
 
       addProject: (proj) =>
         set((state) => ({
@@ -225,6 +259,13 @@ export const useStore = create<State>()(
           profile: {
             ...state.profile,
             projects: state.profile.projects.filter((p) => p.id !== id),
+          },
+        })),
+      moveProject: (id, direction) =>
+        set((state) => ({
+          profile: {
+            ...state.profile,
+            projects: moveItem(state.profile.projects, id, direction),
           },
         })),
 
@@ -249,6 +290,13 @@ export const useStore = create<State>()(
             education: state.profile.education.filter((e) => e.id !== id),
           },
         })),
+      moveEducation: (id, direction) =>
+        set((state) => ({
+          profile: {
+            ...state.profile,
+            education: moveItem(state.profile.education, id, direction),
+          },
+        })),
 
       addSkill: (skill) =>
         set((state) => ({
@@ -271,6 +319,13 @@ export const useStore = create<State>()(
             skills: state.profile.skills.filter((s) => s.id !== id),
           },
         })),
+      moveSkill: (id, direction) =>
+        set((state) => ({
+          profile: {
+            ...state.profile,
+            skills: moveItem(state.profile.skills, id, direction),
+          },
+        })),
 
       addMiscItem: (item) =>
         set((state) => ({
@@ -291,6 +346,13 @@ export const useStore = create<State>()(
           profile: {
             ...state.profile,
             miscellaneous: state.profile.miscellaneous.filter((m) => m.id !== id),
+          },
+        })),
+      moveMiscItem: (id, direction) =>
+        set((state) => ({
+          profile: {
+            ...state.profile,
+            miscellaneous: moveItem(state.profile.miscellaneous, id, direction),
           },
         })),
 

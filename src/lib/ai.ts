@@ -88,6 +88,8 @@ export async function extractProfileFromText(textContext: string, existingProfil
       "website": "string",
       "linkedin": "string",
       "github": "string",
+      "leetcode": "string",
+      "codeforces": "string",
       "summary": "string"
     },
     "experience": [
@@ -114,7 +116,9 @@ export async function extractProfileFromText(textContext: string, existingProfil
         "degree": "string",
         "startDate": "string",
         "endDate": "string",
-        "current": boolean
+        "current": boolean,
+        "cgpa": "string (optional)",
+        "percentage": "string (optional)"
       }
     ],
     "skills": [
@@ -252,6 +256,8 @@ export async function generateJSONResume(jobDescription: string, profileContext:
       "location": "string",
       "linkedin": "string",
       "github": "string",
+      "leetcode": "string",
+      "codeforces": "string",
       "website": "string"
     },
     "education": [

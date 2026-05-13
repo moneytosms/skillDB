@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Plus, Trash2, Edit2, Check, X, Calendar } from 'lucide-react';
+import { Plus, Trash2, Edit2, Check, X, Calendar, ArrowUp, ArrowDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { MagicImport } from '../components/profile/MagicImport';
 
@@ -100,6 +100,14 @@ function PersonalInfoForm() {
           <label className="block text-sm font-medium mb-1 dark:text-gray-300">GitHub</label>
           <input type="url" value={info.github} onChange={e => setInfo({...info, github: e.target.value})} className="w-full bg-white dark:bg-[#1A1A1A] border border-gray-300 dark:border-gray-700 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white" />
         </div>
+        <div>
+          <label className="block text-sm font-medium mb-1 dark:text-gray-300">LeetCode</label>
+          <input type="url" value={info.leetcode} onChange={e => setInfo({...info, leetcode: e.target.value})} className="w-full bg-white dark:bg-[#1A1A1A] border border-gray-300 dark:border-gray-700 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1 dark:text-gray-300">Codeforces</label>
+          <input type="url" value={info.codeforces} onChange={e => setInfo({...info, codeforces: e.target.value})} className="w-full bg-white dark:bg-[#1A1A1A] border border-gray-300 dark:border-gray-700 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white" />
+        </div>
       </div>
       <div className="flex justify-end border-t border-gray-100 dark:border-gray-800 pt-4">
         <button onClick={handleSave} className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors font-medium">
@@ -112,13 +120,38 @@ function PersonalInfoForm() {
 
 // Simple implementations for others to fit in a single file
 function ExperienceManager() {
-  const { profile, addExperience, deleteExperience } = useStore();
+  const { profile, addExperience, updateExperience, deleteExperience, moveExperience } = useStore();
   const [isAdding, setIsAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ company: '', role: '', startDate: '', endDate: '', current: false, description: '' });
 
   const handleAdd = () => {
-    addExperience(form);
+    if (editingId) {
+      updateExperience(editingId, form);
+    } else {
+      addExperience(form);
+    }
     setIsAdding(false);
+    setEditingId(null);
+    setForm({ company: '', role: '', startDate: '', endDate: '', current: false, description: '' });
+  };
+
+  const handleEdit = (exp: any) => {
+    setForm({
+      company: exp.company || '',
+      role: exp.role || '',
+      startDate: exp.startDate || '',
+      endDate: exp.endDate || '',
+      current: exp.current || false,
+      description: exp.description || ''
+    });
+    setEditingId(exp.id);
+    setIsAdding(true);
+  };
+
+  const handleCancel = () => {
+    setIsAdding(false);
+    setEditingId(null);
     setForm({ company: '', role: '', startDate: '', endDate: '', current: false, description: '' });
   };
 
@@ -126,7 +159,7 @@ function ExperienceManager() {
     <div className="flex flex-col h-full">
       <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-[#1A1A1A] sticky top-0 z-10">
         <h2 className="text-xl font-semibold dark:text-gray-100">Experience</h2>
-        <button onClick={() => setIsAdding(!isAdding)} className="flex items-center gap-1 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md font-medium text-black">
+        <button onClick={isAdding ? handleCancel : () => setIsAdding(true)} className="flex items-center gap-1 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md font-medium text-black">
           {isAdding ? <X size={16} /> : <Plus size={16} />} {isAdding ? 'Cancel' : 'Add New'}
         </button>
       </div>
@@ -150,7 +183,7 @@ function ExperienceManager() {
                 <textarea rows={4} value={form.description} onChange={e=>setForm({...form, description: e.target.value})} className="w-full border dark:border-gray-700 dark:bg-[#1A1A1A] dark:text-gray-100 rounded p-2 font-mono text-sm" placeholder="- Built scalable APIs using Node.js..." />
               </div>
             </div>
-            <button onClick={handleAdd} className="bg-blue-600 text-white px-4 py-2 rounded text-sm w-full font-medium hover:bg-blue-700">Save Experience</button>
+            <button onClick={handleAdd} className="bg-blue-600 text-white px-4 py-2 rounded text-sm w-full font-medium hover:bg-blue-700">{editingId ? 'Update Experience' : 'Save Experience'}</button>
           </div>
         )}
 
@@ -162,7 +195,16 @@ function ExperienceManager() {
                   <h3 className="font-semibold text-lg dark:text-gray-100">{exp.role} <span className="text-gray-400 dark:text-gray-500 font-normal">at</span> {exp.company}</h3>
                   <div className="text-sm text-gray-500 dark:text-gray-400 font-mono flex items-center gap-1 mt-1"><Calendar size={14} /> {formatDate(exp.startDate)} - {exp.current ? 'Present' : formatDate(exp.endDate)}</div>
                 </div>
-                <button onClick={() => deleteExperience(exp.id)} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-md transition-colors"><Trash2 size={16} /></button>
+                <div className="flex flex-col gap-2">
+                  <div className="flex bg-gray-100 dark:bg-gray-800 rounded-md overflow-hidden">
+                    <button onClick={() => moveExperience(exp.id, 'up')} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors border-r border-gray-200 dark:border-gray-700"><ArrowUp size={14} /></button>
+                    <button onClick={() => moveExperience(exp.id, 'down')} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"><ArrowDown size={14} /></button>
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <button onClick={() => handleEdit(exp)} className="text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-2 rounded-md transition-colors"><Edit2 size={16} /></button>
+                    <button onClick={() => deleteExperience(exp.id)} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-md transition-colors"><Trash2 size={16} /></button>
+                  </div>
+                </div>
               </div>
               <p className="mt-4 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{exp.description}</p>
             </div>
@@ -184,13 +226,37 @@ function formatDate(dateString: string) {
 }
 
 function ProjectManager() {
-  const { profile, addProject, deleteProject } = useStore();
+  const { profile, addProject, updateProject, deleteProject, moveProject } = useStore();
   const [isAdding, setIsAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', description: '', link: '', technologies: '' });
 
   const handleAdd = () => {
-    addProject({ ...form, technologies: form.technologies.split(',').map(s=>s.trim()).filter(Boolean) });
+    const projectData = { ...form, technologies: form.technologies.split(',').map(s=>s.trim()).filter(Boolean) };
+    if (editingId) {
+      updateProject(editingId, projectData);
+    } else {
+      addProject(projectData);
+    }
     setIsAdding(false);
+    setEditingId(null);
+    setForm({ name: '', description: '', link: '', technologies: '' });
+  };
+
+  const handleEdit = (proj: any) => {
+    setForm({
+      name: proj.name || '',
+      description: proj.description || '',
+      link: proj.link || '',
+      technologies: (proj.technologies || []).join(', ')
+    });
+    setEditingId(proj.id);
+    setIsAdding(true);
+  };
+
+  const handleCancel = () => {
+    setIsAdding(false);
+    setEditingId(null);
     setForm({ name: '', description: '', link: '', technologies: '' });
   };
 
@@ -198,7 +264,7 @@ function ProjectManager() {
     <div className="flex flex-col h-full">
       <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-[#1A1A1A] sticky top-0 z-10">
         <h2 className="text-xl font-semibold dark:text-gray-100">Projects</h2>
-        <button onClick={() => setIsAdding(!isAdding)} className="flex items-center gap-1 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md font-medium text-black">
+        <button onClick={isAdding ? handleCancel : () => setIsAdding(true)} className="flex items-center gap-1 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md font-medium text-black">
           {isAdding ? <X size={16} /> : <Plus size={16} />} {isAdding ? 'Cancel' : 'Add New'}
         </button>
       </div>
@@ -215,7 +281,7 @@ function ProjectManager() {
                 <textarea rows={3} value={form.description} onChange={e=>setForm({...form, description: e.target.value})} className="w-full border dark:border-gray-700 dark:bg-[#1A1A1A] dark:text-gray-100 rounded p-2 text-sm" placeholder="What does this project do?" />
               </div>
             </div>
-            <button onClick={handleAdd} className="bg-blue-600 text-white px-4 py-2 rounded text-sm w-full font-medium hover:bg-blue-700">Save Project</button>
+            <button onClick={handleAdd} className="bg-blue-600 text-white px-4 py-2 rounded text-sm w-full font-medium hover:bg-blue-700">{editingId ? 'Update Project' : 'Save Project'}</button>
           </div>
         )}
 
@@ -227,7 +293,16 @@ function ProjectManager() {
                   <h3 className="font-semibold text-lg dark:text-gray-100">{proj.name}</h3>
                   {proj.link && <a href={proj.link} target="_blank" rel="noreferrer" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">{proj.link}</a>}
                 </div>
-                <button onClick={() => deleteProject(proj.id)} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-md transition-colors"><Trash2 size={16} /></button>
+                <div className="flex flex-col gap-2">
+                  <div className="flex bg-gray-100 dark:bg-gray-800 rounded-md overflow-hidden">
+                    <button onClick={() => moveProject(proj.id, 'up')} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors border-r border-gray-200 dark:border-gray-700"><ArrowUp size={14} /></button>
+                    <button onClick={() => moveProject(proj.id, 'down')} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"><ArrowDown size={14} /></button>
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <button onClick={() => handleEdit(proj)} className="text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-2 rounded-md transition-colors"><Edit2 size={16} /></button>
+                    <button onClick={() => deleteProject(proj.id)} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-md transition-colors"><Trash2 size={16} /></button>
+                  </div>
+                </div>
               </div>
               <p className="mt-3 text-sm text-gray-700 dark:text-gray-300">{proj.description}</p>
               <div className="mt-4 flex flex-wrap gap-2">
@@ -245,21 +320,47 @@ function ProjectManager() {
 }
 
 function EducationManager() {
-  const { profile, addEducation, deleteEducation } = useStore();
+  const { profile, addEducation, updateEducation, deleteEducation, moveEducation } = useStore();
   const [isAdding, setIsAdding] = useState(false);
-  const [form, setForm] = useState({ institution: '', degree: '', startDate: '', endDate: '', current: false });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState({ institution: '', degree: '', startDate: '', endDate: '', current: false, cgpa: '', percentage: '' });
 
   const handleAdd = () => {
-    addEducation(form);
+    if (editingId) {
+      updateEducation(editingId, form);
+    } else {
+      addEducation(form);
+    }
     setIsAdding(false);
-    setForm({ institution: '', degree: '', startDate: '', endDate: '', current: false });
+    setEditingId(null);
+    setForm({ institution: '', degree: '', startDate: '', endDate: '', current: false, cgpa: '', percentage: '' });
+  };
+
+  const handleEdit = (edu: any) => {
+    setForm({
+      institution: edu.institution || '',
+      degree: edu.degree || '',
+      startDate: edu.startDate || '',
+      endDate: edu.endDate || '',
+      current: edu.current || false,
+      cgpa: edu.cgpa || '',
+      percentage: edu.percentage || ''
+    });
+    setEditingId(edu.id);
+    setIsAdding(true);
+  };
+
+  const handleCancel = () => {
+    setIsAdding(false);
+    setEditingId(null);
+    setForm({ institution: '', degree: '', startDate: '', endDate: '', current: false, cgpa: '', percentage: '' });
   };
 
   return (
     <div className="flex flex-col h-full">
       <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-[#1A1A1A] sticky top-0 z-10">
         <h2 className="text-xl font-semibold dark:text-gray-100">Education</h2>
-        <button onClick={() => setIsAdding(!isAdding)} className="flex items-center gap-1 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md font-medium text-black">
+        <button onClick={isAdding ? handleCancel : () => setIsAdding(true)} className="flex items-center gap-1 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md font-medium text-black">
           {isAdding ? <X size={16} /> : <Plus size={16} />} {isAdding ? 'Cancel' : 'Add New'}
         </button>
       </div>
@@ -279,7 +380,11 @@ function EducationManager() {
                   </div>
                </div>
              </div>
-            <button onClick={handleAdd} className="bg-blue-600 text-white px-4 py-2 rounded text-sm w-full font-medium mt-2 hover:bg-blue-700">Save Education</button>
+             <div className="grid grid-cols-2 gap-4">
+               <div><label className="block text-xs font-medium mb-1 dark:text-gray-300">CGPA (Optional)</label><input type="text" value={form.cgpa} onChange={e=>setForm({...form, cgpa: e.target.value})} className="w-full border dark:border-gray-700 dark:bg-[#1A1A1A] dark:text-gray-100 rounded p-2" placeholder="e.g. 3.8/4.0" /></div>
+               <div><label className="block text-xs font-medium mb-1 dark:text-gray-300">Percentage (Optional)</label><input type="text" value={form.percentage} onChange={e=>setForm({...form, percentage: e.target.value})} className="w-full border dark:border-gray-700 dark:bg-[#1A1A1A] dark:text-gray-100 rounded p-2" placeholder="e.g. 95%" /></div>
+             </div>
+            <button onClick={handleAdd} className="bg-blue-600 text-white px-4 py-2 rounded text-sm w-full font-medium mt-2 hover:bg-blue-700">{editingId ? 'Update Education' : 'Save Education'}</button>
           </div>
         )}
 
@@ -290,8 +395,16 @@ function EducationManager() {
                 <h3 className="font-semibold text-lg dark:text-gray-100">{edu.degree}</h3>
                 <div className="text-gray-700 dark:text-gray-300">{edu.institution}</div>
                 <div className="text-sm text-gray-500 dark:text-gray-400 font-mono mt-1"><Calendar className="inline" size={14}/> {formatDate(edu.startDate)} - {edu.current ? 'Present' : formatDate(edu.endDate)}</div>
+                {(edu.cgpa || edu.percentage) && <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">{edu.cgpa ? `CGPA: ${edu.cgpa}` : ''}{edu.cgpa && edu.percentage ? ' | ' : ''}{edu.percentage ? `Percentage: ${edu.percentage}` : ''}</div>}
               </div>
-              <button onClick={() => deleteEducation(edu.id)} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-md transition-colors"><Trash2 size={16} /></button>
+              <div className="flex flex-col lg:flex-row gap-2">
+                 <div className="flex bg-gray-100 dark:bg-gray-800 rounded-md overflow-hidden mr-1">
+                    <button onClick={() => moveEducation(edu.id, 'up')} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors border-r border-gray-200 dark:border-gray-700"><ArrowUp size={14} /></button>
+                    <button onClick={() => moveEducation(edu.id, 'down')} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"><ArrowDown size={14} /></button>
+                 </div>
+                 <button onClick={() => handleEdit(edu)} className="text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-2 rounded-md transition-colors"><Edit2 size={16} /></button>
+                 <button onClick={() => deleteEducation(edu.id)} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-md transition-colors"><Trash2 size={16} /></button>
+              </div>
             </div>
           ))}
           {profile.education.length === 0 && !isAdding && (
@@ -304,13 +417,35 @@ function EducationManager() {
 }
 
 function SkillManager() {
-  const { profile, addSkill, deleteSkill } = useStore();
+  const { profile, addSkill, updateSkill, deleteSkill, moveSkill } = useStore();
   const [isAdding, setIsAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ category: '', items: '' });
 
   const handleAdd = () => {
-    addSkill({ category: form.category || 'General', items: form.items.split(',').map(s=>s.trim()).filter(Boolean) });
+    const skillData = { category: form.category || 'General', items: form.items.split(',').map(s=>s.trim()).filter(Boolean) };
+    if (editingId) {
+      updateSkill(editingId, skillData);
+    } else {
+      addSkill(skillData);
+    }
     setIsAdding(false);
+    setEditingId(null);
+    setForm({ category: '', items: '' });
+  };
+
+  const handleEdit = (skill: any) => {
+    setForm({
+      category: skill.category || '',
+      items: (skill.items || []).join(', ')
+    });
+    setEditingId(skill.id);
+    setIsAdding(true);
+  };
+
+  const handleCancel = () => {
+    setIsAdding(false);
+    setEditingId(null);
     setForm({ category: '', items: '' });
   };
 
@@ -318,7 +453,7 @@ function SkillManager() {
     <div className="flex flex-col h-full">
       <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-[#1A1A1A] sticky top-0 z-10">
         <h2 className="text-xl font-semibold dark:text-gray-100">Skills</h2>
-        <button onClick={() => setIsAdding(!isAdding)} className="flex items-center gap-1 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md font-medium text-black">
+        <button onClick={isAdding ? handleCancel : () => setIsAdding(true)} className="flex items-center gap-1 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md font-medium text-black">
           {isAdding ? <X size={16} /> : <Plus size={16} />} {isAdding ? 'Cancel' : 'Add Group'}
         </button>
       </div>
@@ -328,7 +463,7 @@ function SkillManager() {
           <div className="bg-white dark:bg-[#141414] border text-sm border-gray-200 dark:border-gray-800 p-5 rounded-lg mb-6 shadow-sm space-y-4">
             <div><label className="block text-xs font-medium mb-1 dark:text-gray-300">Category (e.g. Languages, Frameworks)</label><input value={form.category} onChange={e=>setForm({...form, category: e.target.value})} className="w-full border dark:border-gray-700 dark:bg-[#1A1A1A] dark:text-gray-100 rounded p-2" /></div>
             <div><label className="block text-xs font-medium mb-1 dark:text-gray-300">Skills (comma separated)</label><input value={form.items} onChange={e=>setForm({...form, items: e.target.value})} className="w-full border dark:border-gray-700 dark:bg-[#1A1A1A] dark:text-gray-100 rounded p-2 font-mono text-xs" /></div>
-            <button onClick={handleAdd} className="bg-blue-600 text-white px-4 py-2 rounded text-sm w-full font-medium hover:bg-blue-700">Save Skills</button>
+            <button onClick={handleAdd} className="bg-blue-600 text-white px-4 py-2 rounded text-sm w-full font-medium hover:bg-blue-700">{editingId ? 'Update Skills' : 'Save Skills'}</button>
           </div>
         )}
 
@@ -337,7 +472,14 @@ function SkillManager() {
             <div key={skill.id} className="bg-white dark:bg-[#141414] border border-gray-200 dark:border-gray-800 p-5 rounded-lg shadow-sm">
               <div className="flex justify-between items-start mb-3 border-b border-gray-100 dark:border-gray-800 pb-2">
                 <h3 className="font-semibold text-gray-800 dark:text-gray-200 uppercase tracking-wider text-xs">{skill.category}</h3>
-                <button onClick={() => deleteSkill(skill.id)} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-1.5 -mr-1.5 -mt-1.5 rounded transition-colors"><Trash2 size={14} /></button>
+                <div className="flex -mr-1.5 -mt-1.5">
+                  <div className="flex bg-gray-100 dark:bg-gray-800 rounded overflow-hidden mr-2 self-center">
+                    <button onClick={() => moveSkill(skill.id, 'up')} className="px-1.5 py-1 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors border-r border-gray-200 dark:border-gray-700"><ArrowUp size={12} /></button>
+                    <button onClick={() => moveSkill(skill.id, 'down')} className="px-1.5 py-1 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"><ArrowDown size={12} /></button>
+                  </div>
+                  <button onClick={() => handleEdit(skill)} className="text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-1.5 rounded transition-colors"><Edit2 size={14} /></button>
+                  <button onClick={() => deleteSkill(skill.id)} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-1.5 rounded transition-colors"><Trash2 size={14} /></button>
+                </div>
               </div>
               <div className="flex flex-wrap gap-2">
                 {skill.items.map((item, i) => <span key={i} className="px-2 py-1 bg-black text-white dark:bg-[#1A1A1A] dark:text-gray-200 rounded text-xs">{item}</span>)}
@@ -354,13 +496,37 @@ function SkillManager() {
 }
 
 function MiscManager() {
-  const { profile, addMiscItem, deleteMiscItem } = useStore();
+  const { profile, addMiscItem, updateMiscItem, deleteMiscItem, moveMiscItem } = useStore();
   const [isAdding, setIsAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ type: 'Award', title: '', subtitle: '', date: '', description: '' });
 
   const handleAdd = () => {
-    addMiscItem(form);
+    if (editingId) {
+      updateMiscItem(editingId, form);
+    } else {
+      addMiscItem(form);
+    }
     setIsAdding(false);
+    setEditingId(null);
+    setForm({ type: 'Award', title: '', subtitle: '', date: '', description: '' });
+  };
+
+  const handleEdit = (item: any) => {
+    setForm({
+      type: item.type || 'Award',
+      title: item.title || '',
+      subtitle: item.subtitle || '',
+      date: item.date || '',
+      description: item.description || ''
+    });
+    setEditingId(item.id);
+    setIsAdding(true);
+  };
+
+  const handleCancel = () => {
+    setIsAdding(false);
+    setEditingId(null);
     setForm({ type: 'Award', title: '', subtitle: '', date: '', description: '' });
   };
 
@@ -371,7 +537,7 @@ function MiscManager() {
           <h2 className="text-xl font-semibold dark:text-gray-100">Miscellaneous</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">Awards, Certifications, Volunteering, etc.</p>
         </div>
-        <button onClick={() => setIsAdding(!isAdding)} className="flex items-center gap-1 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md font-medium text-black">
+        <button onClick={isAdding ? handleCancel : () => setIsAdding(true)} className="flex items-center gap-1 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md font-medium text-black">
           {isAdding ? <X size={16} /> : <Plus size={16} />} {isAdding ? 'Cancel' : 'Add New'}
         </button>
       </div>
@@ -398,7 +564,7 @@ function MiscManager() {
                 <label className="block text-xs font-medium mb-1 dark:text-gray-300">Description (Optional)</label>
                 <textarea rows={3} value={form.description} onChange={e=>setForm({...form, description: e.target.value})} className="w-full border dark:border-gray-700 dark:bg-[#1A1A1A] dark:text-gray-100 rounded p-2 text-sm max-h-32" />
              </div>
-            <button onClick={handleAdd} className="bg-blue-600 text-white px-4 py-2 rounded text-sm w-full font-medium mt-2 hover:bg-blue-700">Save Entry</button>
+            <button onClick={handleAdd} className="bg-blue-600 text-white px-4 py-2 rounded text-sm w-full font-medium mt-2 hover:bg-blue-700">{editingId ? 'Update Entry' : 'Save Entry'}</button>
           </div>
         )}
 
@@ -412,7 +578,14 @@ function MiscManager() {
                   {item.subtitle && <div className="text-gray-700 dark:text-gray-300 text-sm mt-0.5">{item.subtitle}</div>}
                   {item.date && <div className="text-sm text-gray-500 dark:text-gray-400 font-mono mt-1"><Calendar className="inline mr-1" size={14}/>{formatDate(item.date)}</div>}
                 </div>
-                <button onClick={() => deleteMiscItem(item.id)} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-md transition-colors"><Trash2 size={16} /></button>
+                <div className="flex flex-col lg:flex-row gap-2">
+                  <div className="flex bg-gray-100 dark:bg-gray-800 rounded-md overflow-hidden mr-1">
+                    <button onClick={() => moveMiscItem(item.id, 'up')} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors border-r border-gray-200 dark:border-gray-700"><ArrowUp size={14} /></button>
+                    <button onClick={() => moveMiscItem(item.id, 'down')} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"><ArrowDown size={14} /></button>
+                  </div>
+                  <button onClick={() => handleEdit(item)} className="text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-2 rounded-md transition-colors"><Edit2 size={16} /></button>
+                  <button onClick={() => deleteMiscItem(item.id)} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-md transition-colors"><Trash2 size={16} /></button>
+                </div>
               </div>
               {item.description && <p className="text-sm text-gray-700 dark:text-gray-300 mt-2 whitespace-pre-wrap">{item.description}</p>}
             </div>

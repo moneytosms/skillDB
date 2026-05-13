@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, Phone, MapPin, Linkedin, Github, Globe } from 'lucide-react';
+import { Mail, Phone, MapPin, Linkedin, Github, Globe, Code } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export type TemplateVariant = 'standard' | 'modern' | 'executive' | 'compact';
@@ -40,6 +40,8 @@ export function ResumeTemplate({ content, variant = 'standard' }: ResumeTemplate
               {personalInfo.phone && <span className="flex items-center gap-1"><Phone size={10}/> {personalInfo.phone}</span>}
               {personalInfo.linkedin && <a href={personalInfo.linkedin} className="flex items-center gap-1 text-gray-600"><Linkedin size={10}/> LinkedIn</a>}
               {personalInfo.github && <a href={personalInfo.github} className="flex items-center gap-1 text-gray-600"><Github size={10}/> GitHub</a>}
+              {personalInfo.leetcode && <a href={personalInfo.leetcode} className="flex items-center gap-1 text-gray-600"><Code size={10}/> LeetCode</a>}
+              {personalInfo.codeforces && <a href={personalInfo.codeforces} className="flex items-center gap-1 text-gray-600"><Code size={10}/> Codeforces</a>}
             </div>
           </div>
         );
@@ -52,6 +54,10 @@ export function ResumeTemplate({ content, variant = 'standard' }: ResumeTemplate
               {personalInfo.email && <span>{personalInfo.email}</span>}
               {personalInfo.phone && <span>{personalInfo.phone}</span>}
               {personalInfo.linkedin && <a href={personalInfo.linkedin}>LinkedIn</a>}
+              {personalInfo.github && <a href={personalInfo.github}>GitHub</a>}
+              {personalInfo.leetcode && <a href={personalInfo.leetcode}>LeetCode</a>}
+              {personalInfo.codeforces && <a href={personalInfo.codeforces}>Codeforces</a>}
+              {personalInfo.website && <a href={personalInfo.website}>Portfolio</a>}
             </div>
           </div>
         );
@@ -65,6 +71,8 @@ export function ResumeTemplate({ content, variant = 'standard' }: ResumeTemplate
               {personalInfo.phone && <span>{personalInfo.phone}</span>}
               {personalInfo.linkedin && <a href={personalInfo.linkedin} className="text-black">LinkedIn</a>}
               {personalInfo.github && <a href={personalInfo.github} className="text-black">GitHub</a>}
+              {personalInfo.leetcode && <a href={personalInfo.leetcode} className="text-black">LeetCode</a>}
+              {personalInfo.codeforces && <a href={personalInfo.codeforces} className="text-black">Codeforces</a>}
               {personalInfo.website && <a href={personalInfo.website} className="text-black">Portfolio</a>}
             </div>
           </div>
@@ -82,6 +90,8 @@ export function ResumeTemplate({ content, variant = 'standard' }: ResumeTemplate
             <div className="flex flex-wrap justify-center gap-3 text-xs mt-0.5 text-gray-800">
               {personalInfo.linkedin && <a href={personalInfo.linkedin} className="flex items-center gap-1 text-blue-700"><Linkedin size={10}/> LinkedIn</a>}
               {personalInfo.github && <a href={personalInfo.github} className="flex items-center gap-1 text-blue-700"><Github size={10}/> GitHub</a>}
+              {personalInfo.leetcode && <a href={personalInfo.leetcode} className="flex items-center gap-1 text-blue-700"><Code size={10}/> LeetCode</a>}
+              {personalInfo.codeforces && <a href={personalInfo.codeforces} className="flex items-center gap-1 text-blue-700"><Code size={10}/> Codeforces</a>}
               {personalInfo.website && <a href={personalInfo.website} className="flex items-center gap-1 text-blue-700"><Globe size={10}/> Portfolio</a>}
             </div>
           </div>
