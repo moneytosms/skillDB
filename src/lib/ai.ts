@@ -10,10 +10,66 @@ export async function extractProfileFromText(textContext: string, existingProfil
   const provider = preferences.aiProvider || 'gemini';
   const model = preferences.aiModel || (provider === 'gemini' ? 'gemini-3.1-pro-preview' : 'llama-3.3-70b-versatile');
 
+  let duplicateHints = '';
+  if (existingProfile) {
+    const cleanTokenize = (text: string) => {
+      const stops = new Set(['a', 'an', 'the', 'and', 'or', 'of', 'in', 'on', 'at', 'to', 'for', 'with', 'is', 'are']);
+      return text.toLowerCase()
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .split(/\s+/)
+        .filter(t => t && !stops.has(t));
+    };
+
+    const getOverlapWeight = (tokens1: string[], tokens2: string[]) => {
+      if (tokens1.length === 0 || tokens2.length === 0) return 0;
+      const set2 = new Set(tokens2);
+      let overlap = 0;
+      for (const t of tokens1) {
+        if (set2.has(t)) overlap++;
+      }
+      return overlap / Math.min(tokens1.length, tokens2.length);
+    };
+
+    // We tokenize sentences/chunks of the raw text to compare against existing items
+    const rawChunks = textContext.split('\n').filter(Boolean);
+    const likelyDuplicates: string[] = [];
+
+    existingProfile.projects?.forEach((p: any) => {
+      if (!p.name) return;
+      const pTokens = cleanTokenize(p.name);
+      const hasMatch = rawChunks.some(chunk => getOverlapWeight(cleanTokenize(chunk), pTokens) >= 0.8);
+      if (hasMatch) {
+        likelyDuplicates.push(`Project: ${p.name}`);
+      }
+    });
+
+    existingProfile.experience?.forEach((e: any) => {
+      if (!e.company || !e.role) return;
+      const eTokens = cleanTokenize(`${e.company} ${e.role}`);
+      const hasMatch = rawChunks.some(chunk => getOverlapWeight(cleanTokenize(chunk), eTokens) >= 0.8);
+      if (hasMatch) {
+        likelyDuplicates.push(`Experience: ${e.company} - ${e.role}`);
+      }
+    });
+
+    if (likelyDuplicates.length > 0) {
+      duplicateHints = `
+  SIMILARITY ALGORITHM HINTS:
+  We have run a local algorithm stripping articles and calculating token overlap weights.
+  The following items from the user's existing profile appear to be strongly matching in this new text (high semantic weight):
+  ${likelyDuplicates.map(d => `- ${d}`).join('\n')}
+
+  CRITICAL DEDUPLICATION INSTRUCTION: 
+  If you decide to extract information that pertains to the above hints, you MUST use the EXACT same 'name', 'company', and 'role' strings provided in the hints. This ensures our deterministic duplicate checker can properly merge the new bullets rather than duplicating the entities. Do not hallucinate variants of these names.
+      `;
+    }
+  }
+
   const prompt = `
   You are an expert data extractor. An applicant has provided their resume or LinkedIn profile text. 
   Your goal is to parse this raw text and extract their detailed profile data into a strict JSON format.
   Extract absolutely everything found in the Raw Text.
+  ${duplicateHints}
 
   Raw Text to Parse:
   """

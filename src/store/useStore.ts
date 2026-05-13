@@ -333,18 +333,40 @@ export const useStore = create<State>()(
         set((state) => {
           const p = state.profile;
           
+          const isSimilar = (s1: string, s2: string) => {
+            if (!s1 && !s2) return true;
+            if (!s1 || !s2) return false;
+            
+            const norm1 = s1.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+            const norm2 = s2.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+            
+            // exact or substring on compressed
+            const comp1 = norm1.replace(/\s+/g, '');
+            const comp2 = norm2.replace(/\s+/g, '');
+            if (comp1 === comp2) return true;
+            if (comp1.includes(comp2) || comp2.includes(comp1)) return true;
+            
+            const tokens1 = new Set(norm1.split(/\s+/).filter(Boolean));
+            const tokens2 = new Set(norm2.split(/\s+/).filter(Boolean));
+            
+            if (tokens1.size === 0 || tokens2.size === 0) return false;
+            
+            let intersection = 0;
+            for (const t of tokens1) {
+              if (tokens2.has(t)) intersection++;
+            }
+            
+            const minTokens = Math.min(tokens1.size, tokens2.size);
+            if (intersection / minTokens >= 0.6) return true;
+            
+            return false;
+          };
+
           const mergeByFields = (existingArray: any[], newArray: any[], fields: string[]) => {
             const merged = [...existingArray];
             for (const newItem of newArray) {
               const duplicateIndex = merged.findIndex(existingItem => 
-                fields.every(field => {
-                  const val1 = String(existingItem[field] || '').toLowerCase().trim();
-                  const val2 = String(newItem[field] || '').toLowerCase().trim();
-                  if (!val1 && !val2) return true;
-                  if (!val1 || !val2) return false;
-                  // Handle partial matches like "Warpclean" vs "Warpclean - Python CLI"
-                  return val1.includes(val2) || val2.includes(val1);
-                })
+                fields.every(field => isSimilar(String(existingItem[field] || ''), String(newItem[field] || '')))
               );
 
               if (duplicateIndex !== -1) {
@@ -360,8 +382,8 @@ export const useStore = create<State>()(
                      // Union arrays (e.g. bullets or technologies)
                      const combined = [...existing[key]];
                      newItem[key].forEach((item: any) => {
-                       const itemStr = String(item).toLowerCase().trim();
-                       if (!combined.some(c => String(c).toLowerCase().trim() === itemStr)) {
+                       const itemStr = String(item);
+                       if (!combined.some(c => isSimilar(String(c), itemStr))) {
                          combined.push(item);
                        }
                      });
@@ -387,10 +409,11 @@ export const useStore = create<State>()(
           const mergeSkills = (existingSkills: Skill[], newSkills: Skill[]) => {
             const merged = [...existingSkills];
             for (const newSkill of newSkills) {
-              const existingIndex = merged.findIndex(s => s.category.toLowerCase().trim() === newSkill.category.toLowerCase().trim());
+              const existingIndex = merged.findIndex(s => isSimilar(s.category, newSkill.category));
               if (existingIndex >= 0) {
-                const existingItems = merged[existingIndex].items.map(i => i.toLowerCase().trim());
-                const nonDuplicateItems = newSkill.items.filter(i => !existingItems.includes(i.toLowerCase().trim()));
+                const nonDuplicateItems = newSkill.items.filter(newItem => 
+                  !merged[existingIndex].items.some(existingItem => isSimilar(existingItem, newItem))
+                );
                 merged[existingIndex] = {
                   ...merged[existingIndex],
                   items: [...merged[existingIndex].items, ...nonDuplicateItems]
