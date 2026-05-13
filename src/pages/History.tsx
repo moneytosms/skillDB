@@ -1,12 +1,13 @@
 import { useStore } from '../store/useStore';
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { FileText, Download, Trash2, ArrowLeft } from 'lucide-react';
-import { ResumeTemplate } from '../components/ResumeTemplate';
+import { FileText, Download, Trash2, ArrowLeft, LayoutTemplate } from 'lucide-react';
+import { ResumeTemplate, TemplateVariant } from '../components/ResumeTemplate';
 
 export default function History() {
   const { resumes, deleteResume } = useStore();
   const [viewingResume, setViewingResume] = useState<string | null>(null);
+  const [templateVariant, setTemplateVariant] = useState<TemplateVariant>('standard');
 
   const activeResume = resumes.find(r => r.id === viewingResume);
 
@@ -17,21 +18,37 @@ export default function History() {
   if (viewingResume && activeResume) {
     return (
       <div className="h-full flex flex-col bg-[#FAFAFA] dark:bg-[#0A0A0A]">
-        <div className="no-print bg-white dark:bg-[#141414] border-b border-[#E5E5E5] dark:border-gray-800 p-4 flex justify-between items-center sticky top-0 z-10">
+        <div className="no-print bg-white dark:bg-[#141414] border-b border-[#E5E5E5] dark:border-gray-800 p-4 flex flex-col sm:flex-row justify-between sm:items-center sticky top-0 z-10 gap-4">
           <div className="flex items-center gap-4">
-            <button onClick={() => setViewingResume(null)} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white">
+            <button onClick={() => setViewingResume(null)} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white shrink-0">
               <ArrowLeft size={16} /> Back to History
             </button>
-            <div className="h-4 w-px bg-gray-300 dark:bg-gray-700"></div>
-            <span className="text-sm text-gray-500">Generated {formatDate(activeResume.createdAt)}</span>
+            <div className="h-4 w-px bg-gray-300 dark:bg-gray-700 hidden sm:block"></div>
+            <span className="text-sm text-gray-500 hidden sm:block">Generated {formatDate(activeResume.createdAt)}</span>
           </div>
-          <button onClick={handlePrint} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium">
-            <Download size={16} /> Save as PDF
-          </button>
+          
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <div className="flex items-center bg-gray-100 dark:bg-gray-800 py-1.5 px-3 rounded-lg border border-gray-200 dark:border-gray-700 flex-1 sm:flex-none">
+               <LayoutTemplate size={16} className="text-gray-500 mr-2 shrink-0" />
+               <select 
+                 value={templateVariant}
+                 onChange={(e) => setTemplateVariant(e.target.value as TemplateVariant)}
+                 className="bg-transparent text-sm w-full outline-none text-gray-800 dark:text-gray-200"
+               >
+                 <option value="standard">Standard (ATS)</option>
+                 <option value="compact">Compact (Ultra-Tight)</option>
+                 <option value="modern">Modern (Clean)</option>
+                 <option value="executive">Executive (Serif)</option>
+               </select>
+            </div>
+            <button onClick={handlePrint} className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shrink-0">
+              <Download size={16} /> Save PDF
+            </button>
+          </div>
         </div>
         
         <div className="flex-1 overflow-y-auto p-4 md:p-8 relative">
-           <ResumeTemplate content={activeResume.content} />
+           <ResumeTemplate content={activeResume.content} variant={templateVariant} />
         </div>
       </div>
     );

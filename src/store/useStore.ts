@@ -320,17 +320,51 @@ export const useStore = create<State>()(
       mergeProfileData: (data) =>
         set((state) => {
           const p = state.profile;
+          
+          const mergeByFields = (existingArray: any[], newArray: any[], fields: string[]) => {
+            const merged = [...existingArray];
+            for (const newItem of newArray) {
+              const isDuplicate = merged.some(existingItem => 
+                fields.every(field => 
+                  String(existingItem[field] || '').toLowerCase().trim() === String(newItem[field] || '').toLowerCase().trim()
+                )
+              );
+              if (!isDuplicate) {
+                merged.push({ ...newItem, id: newItem.id || uuidv4() });
+              }
+            }
+            return merged;
+          };
+
+          const mergeSkills = (existingSkills: Skill[], newSkills: Skill[]) => {
+            const merged = [...existingSkills];
+            for (const newSkill of newSkills) {
+              const existingIndex = merged.findIndex(s => s.category.toLowerCase().trim() === newSkill.category.toLowerCase().trim());
+              if (existingIndex >= 0) {
+                const existingItems = merged[existingIndex].items.map(i => i.toLowerCase().trim());
+                const nonDuplicateItems = newSkill.items.filter(i => !existingItems.includes(i.toLowerCase().trim()));
+                merged[existingIndex] = {
+                  ...merged[existingIndex],
+                  items: [...merged[existingIndex].items, ...nonDuplicateItems]
+                };
+              } else {
+                merged.push({ ...newSkill, id: newSkill.id || uuidv4() });
+              }
+            }
+            return merged;
+          };
+
           return {
             profile: {
               personalInfo: {
                 ...p.personalInfo,
                 ...(data.personalInfo || {})
               },
-              experience: data.experience ? [...p.experience, ...data.experience] : p.experience,
-              education: data.education ? [...p.education, ...data.education] : p.education,
-              projects: data.projects ? [...p.projects, ...data.projects] : p.projects,
-              skills: data.skills ? [...p.skills, ...data.skills] : p.skills,
-              miscellaneous: data.miscellaneous ? [...(p.miscellaneous || []), ...data.miscellaneous] : (p.miscellaneous || []),
+              experience: data.experience ? mergeByFields(p.experience, data.experience, ['company', 'role']) : p.experience,
+              education: data.education ? mergeByFields(p.education, data.education, ['institution', 'degree']) : p.education,
+              projects: data.projects ? mergeByFields(p.projects, data.projects, ['name']) : p.projects,
+              skills: data.skills ? mergeSkills(p.skills, data.skills) : p.skills,
+              miscellaneous: data.miscellaneous ? mergeByFields(p.miscellaneous || [], data.miscellaneous, ['title', 'type']) : (p.miscellaneous || []),
             }
           };
         }),

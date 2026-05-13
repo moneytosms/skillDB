@@ -1,11 +1,15 @@
 import React from 'react';
 import { Mail, Phone, MapPin, Linkedin, Github, Globe } from 'lucide-react';
+import { cn } from '../lib/utils';
+
+export type TemplateVariant = 'standard' | 'modern' | 'executive' | 'compact';
 
 interface ResumeTemplateProps {
   content: string; // JSON string
+  variant?: TemplateVariant;
 }
 
-export function ResumeTemplate({ content }: ResumeTemplateProps) {
+export function ResumeTemplate({ content, variant = 'standard' }: ResumeTemplateProps) {
   let data;
   try {
     data = JSON.parse(content);
@@ -15,61 +19,119 @@ export function ResumeTemplate({ content }: ResumeTemplateProps) {
 
   const { personalInfo = {}, education = [], experience = [], projects = [], skills = {}, certifications = [], awards = [] } = data;
 
-  return (
-    <div className="bg-white p-[1in] max-w-[850px] mx-auto min-h-[11in] text-black bg-white shadow-xl border border-gray-200 print:shadow-none print:border-none print:p-0 print:w-[8.5in] print:h-[11in] font-sans text-sm leading-tight">
-      
-      {/* Header */}
-      <div className="text-center mb-4">
-        <h1 className="text-3xl font-bold font-serif -mb-1">{personalInfo.name || 'Your Name'}</h1>
-        
-        <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs mt-2 text-gray-800">
-          {personalInfo.location && <span className="flex items-center gap-1"><MapPin size={12}/> {personalInfo.location}</span>}
-          {personalInfo.email && <span className="flex items-center gap-1"><Mail size={12}/> {personalInfo.email}</span>}
-          {personalInfo.phone && <span className="flex items-center gap-1"><Phone size={12}/> {personalInfo.phone}</span>}
-        </div>
-        
-        <div className="flex flex-wrap justify-center gap-4 text-xs mt-1 text-gray-800">
-          {personalInfo.linkedin && <a href={personalInfo.linkedin} className="flex items-center gap-1 text-blue-700"><Linkedin size={12}/> LinkedIn</a>}
-          {personalInfo.github && <a href={personalInfo.github} className="flex items-center gap-1 text-blue-700"><Github size={12}/> GitHub</a>}
-          {personalInfo.website && <a href={personalInfo.website} className="flex items-center gap-1 text-blue-700"><Globe size={12}/> Portfolio</a>}
-        </div>
-      </div>
+  const getFontFamily = () => {
+    switch (variant) {
+      case 'modern': return 'font-sans';
+      case 'executive': return 'font-serif';
+      case 'compact': return 'font-sans';
+      case 'standard': default: return 'font-sans';
+    }
+  };
 
-      {/* Education */}
-      {education.length > 0 && (
-        <div className="mb-3">
-          <SectionHeader title="EDUCATION" />
-          <div className="pl-1">
-            {education.map((edu: any, i: number) => (
-              <div key={i} className="mb-2">
-                <div className="flex justify-between font-bold text-[13px]">
-                  <span>{edu.institution}</span>
-                  <span className="font-normal italic text-xs">{edu.startDate} – {edu.endDate}</span>
-                </div>
-                <div className="flex justify-between text-[13px]">
-                  <span className="italic">{edu.degree}</span>
-                  <span className="text-xs">{edu.details}</span>
-                </div>
-              </div>
-            ))}
+  const Header = () => {
+    switch (variant) {
+      case 'modern':
+        return (
+          <div className="mb-2 pb-2 border-b-2 border-gray-800">
+            <h1 className="text-2xl lg:text-3xl font-bold font-sans text-gray-900 tracking-tight uppercase">{personalInfo.name || 'Your Name'}</h1>
+            <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs mt-1 text-gray-600">
+              {personalInfo.location && <span className="flex items-center gap-1"><MapPin size={10}/> {personalInfo.location}</span>}
+              {personalInfo.email && <span className="flex items-center gap-1"><Mail size={10}/> {personalInfo.email}</span>}
+              {personalInfo.phone && <span className="flex items-center gap-1"><Phone size={10}/> {personalInfo.phone}</span>}
+              {personalInfo.linkedin && <a href={personalInfo.linkedin} className="flex items-center gap-1 text-gray-600"><Linkedin size={10}/> LinkedIn</a>}
+              {personalInfo.github && <a href={personalInfo.github} className="flex items-center gap-1 text-gray-600"><Github size={10}/> GitHub</a>}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      case 'executive':
+        return (
+          <div className="text-center mb-3 border-b border-black pb-2">
+            <h1 className="text-2xl lg:text-3xl font-bold font-serif mb-1 tracking-wide uppercase">{personalInfo.name || 'Your Name'}</h1>
+            <div className="flex flex-wrap justify-center gap-x-3 gap-y-0.5 text-xs text-black">
+              {personalInfo.location && <span>{personalInfo.location}</span>}
+              {personalInfo.email && <span>{personalInfo.email}</span>}
+              {personalInfo.phone && <span>{personalInfo.phone}</span>}
+              {personalInfo.linkedin && <a href={personalInfo.linkedin}>LinkedIn</a>}
+            </div>
+          </div>
+        );
+      case 'compact':
+        return (
+          <div className="text-center mb-2">
+            <h1 className="text-2xl font-bold font-serif -mb-1">{personalInfo.name || 'Your Name'}</h1>
+            <div className="flex flex-wrap justify-center gap-x-3 gap-y-0.5 text-[11px] mt-1 text-gray-800">
+              {personalInfo.location && <span>{personalInfo.location}</span>}
+              {personalInfo.email && <span>{personalInfo.email}</span>}
+              {personalInfo.phone && <span>{personalInfo.phone}</span>}
+              {personalInfo.linkedin && <a href={personalInfo.linkedin} className="text-black">LinkedIn</a>}
+              {personalInfo.github && <a href={personalInfo.github} className="text-black">GitHub</a>}
+              {personalInfo.website && <a href={personalInfo.website} className="text-black">Portfolio</a>}
+            </div>
+          </div>
+        );
+      case 'standard':
+      default:
+        return (
+          <div className="text-center mb-2">
+            <h1 className="text-2xl lg:text-3xl font-bold font-serif -mb-1">{personalInfo.name || 'Your Name'}</h1>
+            <div className="flex flex-wrap justify-center gap-x-3 gap-y-0.5 text-xs mt-1 text-gray-800">
+              {personalInfo.location && <span className="flex items-center gap-1"><MapPin size={10}/> {personalInfo.location}</span>}
+              {personalInfo.email && <span className="flex items-center gap-1"><Mail size={10}/> {personalInfo.email}</span>}
+              {personalInfo.phone && <span className="flex items-center gap-1"><Phone size={10}/> {personalInfo.phone}</span>}
+            </div>
+            <div className="flex flex-wrap justify-center gap-3 text-xs mt-0.5 text-gray-800">
+              {personalInfo.linkedin && <a href={personalInfo.linkedin} className="flex items-center gap-1 text-blue-700"><Linkedin size={10}/> LinkedIn</a>}
+              {personalInfo.github && <a href={personalInfo.github} className="flex items-center gap-1 text-blue-700"><Github size={10}/> GitHub</a>}
+              {personalInfo.website && <a href={personalInfo.website} className="flex items-center gap-1 text-blue-700"><Globe size={10}/> Portfolio</a>}
+            </div>
+          </div>
+        );
+    }
+  };
+
+  const SectionHeader = ({ title }: { title: string }) => {
+    switch (variant) {
+      case 'modern':
+        return <h2 className="text-xs font-bold font-sans tracking-wide text-gray-900 bg-gray-100 py-0.5 px-2 mb-1 uppercase">{title}</h2>;
+      case 'executive':
+        return <h2 className="text-[13px] font-bold font-serif tracking-widest text-black border-b border-black pb-0.5 mb-1 mt-2 uppercase">{title}</h2>;
+      case 'compact':
+        return <h2 className="text-[12px] font-bold font-serif tracking-tight text-black border-b border-gray-400 pb-0 mb-1 mt-1 uppercase">{title}</h2>;
+      case 'standard':
+      default:
+        return (
+          <div className="mb-1 mt-1.5">
+            <h2 className="text-[12px] font-bold font-serif tracking-widest text-slate-900 border-b border-black pb-0.5 mb-1 uppercase">
+              {title}
+            </h2>
+          </div>
+        );
+    }
+  };
+
+  const LayoutClass = variant === 'compact' 
+    ? "bg-white p-[0.4in] max-w-[850px] mx-auto min-h-[11in] text-black shadow-xl border border-gray-200 print:shadow-none print:border-none print:p-0 print:w-[8.5in] print:h-[11in] text-[12px] leading-tight"
+    : "bg-white p-[0.5in] max-w-[850px] mx-auto min-h-[11in] text-black shadow-xl border border-gray-200 print:shadow-none print:border-none print:p-0 print:w-[8.5in] print:h-[11in] text-[13px] leading-snug";
+
+  return (
+    <div className={cn(LayoutClass, getFontFamily())}>
+      
+      <Header />
 
       {/* Experience */}
       {experience.length > 0 && (
-        <div className="mb-3">
+        <div className="mb-1">
           <SectionHeader title="EXPERIENCE" />
-          <div className="pl-1">
+          <div className={cn((variant === 'standard' || variant === 'compact') ? "pl-1" : "")}>
             {experience.map((exp: any, i: number) => (
-              <div key={i} className="mb-3">
-                <div className="flex justify-between font-bold text-[13px]">
+              <div key={i} className={variant === 'compact' ? "mb-1" : "mb-2"}>
+                <div className="flex justify-between font-bold">
                   <span>{exp.role} <span className="font-normal">— {exp.company}</span></span>
                   <span className="font-normal italic text-xs">{exp.startDate} – {exp.endDate}</span>
                 </div>
-                <ul className="list-dash pl-4 mt-1 text-[13px] space-y-0.5">
+                <ul className={cn("list-dash pl-4 mt-0.5 space-y-0.5", variant === 'compact' ? "text-[11px]" : "text-xs")}>
                   {exp.description?.map((bullet: string, j: number) => (
-                    <li key={j} className="pl-1 relative before:content-['–'] before:absolute before:-left-3 before:top-0">{bullet}</li>
+                    <li key={j} className={cn("pl-1 relative before:absolute before:-left-3 before:top-0", variant === 'modern' ? "before:content-['•']" : "before:content-['–']")}>{bullet}</li>
                   ))}
                 </ul>
               </div>
@@ -78,37 +140,18 @@ export function ResumeTemplate({ content }: ResumeTemplateProps) {
         </div>
       )}
 
-      {/* Technical Skills */}
-      {Object.keys(skills || {}).length > 0 && (
-        <div className="mb-3">
-          <SectionHeader title="TECHNICAL SKILLS" />
-          <div className="pl-1 text-[13px]">
-            <table className="w-full">
-              <tbody>
-                {Object.entries(skills).map(([category, items]: [string, any], i: number) => (
-                  <tr key={i} className="align-top">
-                    <td className="w-32 font-bold py-0.5 pr-2">{category}:</td>
-                    <td className="py-0.5">{items}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
       {/* Projects */}
       {projects.length > 0 && (
-        <div className="mb-3">
+        <div className="mb-1">
           <SectionHeader title="PROJECTS" />
-          <div className="pl-1">
+          <div className={cn((variant === 'standard' || variant === 'compact') ? "pl-1" : "")}>
             {projects.map((proj: any, i: number) => (
-              <div key={i} className="mb-2">
-                <div className="flex justify-between font-bold text-[13px]">
-                  <span>{proj.name} {proj.technologies && <span className="font-normal italic text-xs ml-1">({proj.technologies.join(', ')})</span>}</span>
-                  {proj.link && <a href={proj.link} className="text-blue-700 font-normal underline text-xs">View</a>}
+              <div key={i} className={variant === 'compact' ? "mb-1" : "mb-1.5"}>
+                <div className="flex justify-between font-bold">
+                  <span>{proj.name} {proj.technologies && <span className="font-normal italic text-[11px] ml-1">({proj.technologies.join(', ')})</span>}</span>
+                  {proj.link && <a href={proj.link} className="text-blue-700 font-normal underline text-[11px]">View</a>}
                 </div>
-                <div className="text-[13px] mt-0.5 leading-snug">
+                <div className={cn("mt-0", variant === 'compact' ? "text-[11px]" : "text-xs")}>
                   {proj.description}
                 </div>
               </div>
@@ -117,17 +160,57 @@ export function ResumeTemplate({ content }: ResumeTemplateProps) {
         </div>
       )}
 
+      {/* Education */}
+      {education.length > 0 && (
+        <div className="mb-1">
+          <SectionHeader title="EDUCATION" />
+          <div className={cn((variant === 'standard' || variant === 'compact') ? "pl-1" : "")}>
+            {education.map((edu: any, i: number) => (
+              <div key={i} className={variant === 'compact' ? "mb-0.5" : "mb-1"}>
+                <div className="flex justify-between font-bold">
+                  <span>{edu.institution}</span>
+                  <span className="font-normal italic text-xs">{edu.startDate} – {edu.endDate}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className={cn("italic", variant === 'compact' ? "text-[11px]" : "text-xs")}>{edu.degree}</span>
+                  <span className="text-[11px]">{edu.details}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Technical Skills */}
+      {Object.keys(skills || {}).length > 0 && (
+        <div className="mb-1">
+          <SectionHeader title="TECHNICAL SKILLS" />
+          <div className={cn((variant === 'standard' || variant === 'compact') ? "pl-1" : "")}>
+            <table className={cn("w-full", variant === 'compact' ? "text-[11px]" : "text-xs")}>
+              <tbody>
+                {Object.entries(skills).map(([category, items]: [string, any], i: number) => (
+                  <tr key={i} className="align-top">
+                    <td className="w-28 font-bold py-0 pr-2">{category}:</td>
+                    <td className="py-0">{items}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* Certifications and Awards */}
       {(certifications.length > 0 || awards.length > 0) && (
-        <div className="mb-3">
+        <div className="mb-1">
           <SectionHeader title="AWARDS & CERTIFICATIONS" />
-          <div className="pl-1">
-            <ul className="list-dash pl-4 text-[13px] space-y-0.5">
+          <div className={cn((variant === 'standard' || variant === 'compact') ? "pl-1" : "")}>
+            <ul className={cn("list-dash pl-4 space-y-0.5", variant === 'compact' ? "text-[11px]" : "text-xs")}>
               {awards.map((award: string, i: number) => (
-                 <li key={`a-${i}`} className="pl-1 relative before:content-['•'] before:absolute before:-left-3 before:top-0">{award}</li>
+                 <li key={`a-${i}`} className={cn("pl-1 relative before:absolute before:-left-3 before:top-0", variant === 'modern' ? "before:content-['•']" : "before:content-['–']")}>{award}</li>
               ))}
               {certifications.map((cert: any, i: number) => (
-                 <li key={`c-${i}`} className="pl-1 relative before:content-['•'] before:absolute before:-left-3 before:top-0">
+                 <li key={`c-${i}`} className={cn("pl-1 relative before:absolute before:-left-3 before:top-0", variant === 'modern' ? "before:content-['•']" : "before:content-['–']")}>
                    <span className="font-bold">{cert.name}</span> — {cert.issuer}
                    {cert.link && <a href={cert.link} className="text-blue-700 ml-2">Verify</a>}
                  </li>
@@ -137,16 +220,6 @@ export function ResumeTemplate({ content }: ResumeTemplateProps) {
         </div>
       )}
 
-    </div>
-  );
-}
-
-function SectionHeader({ title }: { title: string }) {
-  return (
-    <div className="mb-2">
-      <h2 className="text-[13px] font-bold font-serif tracking-widest text-slate-900 border-b border-black pb-0.5 mb-1 uppercase">
-        {title}
-      </h2>
     </div>
   );
 }
