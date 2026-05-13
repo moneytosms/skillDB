@@ -1,0 +1,6 @@
+{
+  "name": "skillDB",
+  "description": "A fully local resume and skills management platform that uses AI to generate ATS-friendly resumes tailored to job descriptions.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

@@ -1,0 +1,63 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark, .dark *));
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  :root {
+    --bg: #FAFAFA;
+    --ink: #141414;
+    --primary: #2563EB;
+  }
+  
+  html.dark {
+    --bg: #0f1117;
+    --ink: #f0f0f0;
+    --primary: #60a5fa;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    @apply transition-colors duration-200;
+  }
+
+  /* Printable styles for ATS-friendly resumes */
+  @media print {
+    body {
+      background-color: white;
+    }
+    .no-print {
+      display: none !important;
+    }
+    .print-only {
+      display: block !important;
+    }
+    .markdown-preview {
+      font-size: 11pt;
+      line-height: 1.5;
+    }
+    .markdown-preview h1 {
+      font-size: 24pt;
+      margin-bottom: 8pt;
+    }
+    .markdown-preview h2 {
+      font-size: 14pt;
+      border-bottom: 1px solid black;
+      margin-top: 16pt;
+      margin-bottom: 8pt;
+    }
+    .markdown-preview h3 {
+      font-size: 12pt;
+      margin-top: 12pt;
+      margin-bottom: 4pt;
+    }
+  }
+}
