@@ -230,10 +230,32 @@ export async function extractProfileFromText(textContext: string, existingProfil
   }
 }
 
-export async function generateJSONResume(jobDescription: string, profileContext: string): Promise<string> {
+export async function generateJSONResume(jobDescription: string, profileContext: string, docPrefs?: { docType: string; style: string; font: string; regenerationPrompt?: string }): Promise<string> {
   const { apiKeys, preferences } = useStore.getState();
   const provider = preferences.aiProvider || 'gemini';
   const model = preferences.aiModel || (provider === 'gemini' ? 'gemini-3.1-pro-preview' : 'llama-3.3-70b-versatile');
+
+  let prefInstructions = "";
+  if (docPrefs) {
+    let constraints = "";
+    if (docPrefs.docType === 'Resume') {
+      constraints = `CRITICAL CONSTRAINT: You MUST output a concise resume that fits strictly on ONE page. Be extremely brief, filter out older or less relevant experience, and keep descriptions exceptionally short to ensure it fits perfectly within a single-page layout.`;
+    } else {
+      constraints = `NOTE: The document type is ${docPrefs.docType}, which can span multiple pages. Provide comprehensive and exhaustive details without artificially constraining it to a single page.`;
+    }
+
+    prefInstructions = `
+    ADDITIONAL DOCUMENT PREFERENCES:
+    - Document Type: ${docPrefs.docType}. (If "CV", provide exhaustive academic/comprehensive details. If "Cover Letter" is included in this type, add a "Cover Letter" entry at the top of the "miscellaneous" array containing the letter's text).
+    - Tone & Style: ${docPrefs.style}. (Adapt bullet points: if minimalist, keep them crisp; if bold, use strong verbs; if academic, be formal and thorough).
+    - Font/Look: ${docPrefs.font}.
+    ${constraints}
+    `;
+
+    if (docPrefs.regenerationPrompt) {
+      prefInstructions += `\nUSER REGENERATION INSTRUCTIONS (HIGH PRIORITY STRATEGY):\n"${docPrefs.regenerationPrompt}"\nEnsure you apply these instructions thoughtfully throughout the document!\n`;
+    }
+  }
 
   const prompt = `
   You are an expert resume writer, recruiter, and career coach. Your task is to generate a highly tailored, ATS-friendly resume based on the user's provided profile context and the target job description.
@@ -241,6 +263,8 @@ export async function generateJSONResume(jobDescription: string, profileContext:
   
   Target Job Description / Custom Instructions:
   ${jobDescription}
+
+  ${prefInstructions}
 
   User Profile Context:
   ${profileContext}
@@ -250,9 +274,11 @@ export async function generateJSONResume(jobDescription: string, profileContext:
   CRITICAL INSTRUCTIONS:
   1. The generated resume MUST fill the entire page. 
   2. You must curate and order the items carefully: select the most relevant experiences, projects, and skills for the job description. Prioritize and reorder bullets and sections to match the job listing's emphasis.
-  3. Tailor the wording heavily to mirror the job description's terminology, but MAINTAIN INTEGRITY (do not completely fabricate non-existent roles or degrees).
-  4. If there is not enough content to fill the page, creatively embellish existing details, expand on responsibilities, add plausible adjacent skills based on their profile, and include relevant miscellaneous/volunteer experiences to ensure the resume looks substantial, full, and perfectly suited to give the user a leg up.
-  5. The resume MUST sound like it represents the user perfectly and guarantees them the job.
+  3. DO NOT simply copy-paste from the profile context. You MUST rewrite, elaborate, format, and extrapolate bullet points to be highly professional and impactful. Fix any grammar and capitalization issues (e.g., if a skill is listed as "query optimization", format it properly as "Query Optimization"). Ensure the phrasing uses strong action verbs and quantifies impact where possible.
+  4. Tailor the wording heavily to mirror the job description's terminology, but MAINTAIN INTEGRITY (do not completely fabricate non-existent roles or degrees).
+  5. If there is not enough content to fill the page, creatively embellish existing details, expand on responsibilities, add plausible adjacent skills based on their profile, and include relevant miscellaneous/volunteer experiences to ensure the resume looks substantial, full, and perfectly suited to give the user a leg up.
+  6. The resume MUST sound like it represents the user perfectly and guarantees them the job. You are generating a final polished document so it should know what it is writing.
+
   
   {
     "personalInfo": {
@@ -305,7 +331,8 @@ export async function generateJSONResume(jobDescription: string, profileContext:
         "link": "string"
       }
     ],
-    "awards": ["award string 1", "award string 2"]
+    "awards": ["award string 1", "award string 2"],
+    "coverLetter": "string (optional, only include if document type includes Cover Letter)"
   }
 
   IMPORTANT: Extract and map the user's data into these fields. For 'skills' object, try to map their skills into categories like Programming, Web, Databases, Tools, etc. For experience descriptions, enhance their bullet points to emphasize impact related to the job description if possible. Extract applicable content from 'miscellaneous' into 'awards' and 'certifications'.
@@ -425,6 +452,123 @@ export async function generateJSONResume(jobDescription: string, profileContext:
   }
 
   throw new Error('Invalid AI provider selected.');
+}
+
+
+
+export async function generateLaTeXResume(
+  jsonResume: string, 
+  templateSelection: string, 
+  styleSelection: string, 
+  fontSelection: string, 
+  documentType: string,
+  baseTemplateCode: string
+): Promise<string> {
+  const { apiKeys, preferences } = useStore.getState();
+  const provider = preferences.aiProvider || 'gemini';
+  const model = preferences.aiModel || (provider === 'gemini' ? 'gemini-3.1-pro-preview' : 'llama-3.3-70b-versatile');
+
+  const prompt = `
+  You are an expert LaTeX developer and resume formatter.
+  Your task is to take the provided JSON resume data and format it entirely within the provided LaTeX document template.
+  
+  Configuration Preferences:
+  - Style: ${styleSelection}
+  - Font/Look: ${fontSelection}
+  - Document Type: ${documentType}
+
+  Instruction: 
+  Adapt the chosen template to match the Style, Font, and Document Type selections perfectly using the JSON data.
+  IMPORTANT: If the Document Type includes a Cover Letter (or if there is a Cover Letter in the JSON), you MUST place the Cover Letter FIRST in the LaTeX document, then add a \newpage, and then place the Resume/CV content.
+  Output the final, ready-to-compile LaTeX code in a single code block. Ensure the LaTeX code is complete, ATS-friendly, and has no missing brackets or broken syntax. Do not output anything outside the code block.
+
+  JSON Resume Data:
+  ${jsonResume}
+
+  Base Template (or Custom Template) Code:
+  ${baseTemplateCode}
+  `;
+
+  const cleanLaTeX = (text: string) => {
+    let cleaned = text.trim();
+    if (cleaned.startsWith('\`\`\`latex')) cleaned = cleaned.replace(/^\`\`\`latex/, '');
+    if (cleaned.startsWith('\`\`\`tex')) cleaned = cleaned.replace(/^\`\`\`tex/, '');
+    if (cleaned.startsWith('\`\`\`')) cleaned = cleaned.replace(/^\`\`\`/, '');
+    if (cleaned.endsWith('\`\`\`')) cleaned = cleaned.replace(/\`\`\`$/, '');
+    return cleaned.trim();
+  };
+
+  try {
+    if (provider === 'gemini') {
+      let apiKey = apiKeys.gemini || process.env.GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY;
+      if (!apiKey) throw new Error('No Gemini API key found. Please add it in settings.');
+
+      const ai = new GoogleGenAI({ apiKey });
+      const response = await ai.models.generateContent({
+        model: model,
+        contents: prompt,
+        config: {
+          systemInstruction: "You are an expert LaTeX developer. Only output valid LaTeX. No markdown explanations.",
+          temperature: 0.2,
+        }
+      });
+
+      return cleanLaTeX(response.text || '');
+    } else if (provider === 'groq') {
+      let apiKey = apiKeys.groq;
+      if (!apiKey) throw new Error('No Groq API key found. Please add it in settings.');
+
+      const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
+      const chatCompletion = await groq.chat.completions.create({
+        messages: [
+          { role: "system", content: "You are an expert LaTeX developer. Output ONLY raw LaTeX code inside a single markdown block." },
+          { role: "user", content: prompt },
+        ],
+        model: model,
+        temperature: 0.2,
+      });
+
+      return cleanLaTeX(chatCompletion.choices[0]?.message?.content || '');
+    } else if (provider === 'openai') {
+      let apiKey = apiKeys.openai;
+      if (!apiKey) throw new Error('No OpenAI API key found. Please add it in settings.');
+
+      const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+      const chatCompletion = await openai.chat.completions.create({
+        messages: [
+          { role: "system", content: "You are an expert LaTeX developer. Output ONLY raw LaTeX code inside a single markdown block." },
+          { role: "user", content: prompt },
+        ],
+        model: model,
+        temperature: 0.2,
+      });
+
+      return cleanLaTeX(chatCompletion.choices[0]?.message?.content || '');
+    } else if (provider === 'anthropic') {
+      let apiKey = apiKeys.anthropic;
+      if (!apiKey) throw new Error('No Anthropic API key found. Please add it in settings.');
+
+      const anthropic = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+      const message = await anthropic.messages.create({
+        model: model,
+        max_tokens: 4000,
+        temperature: 0.2,
+        system: "You are an expert LaTeX developer. Output ONLY raw LaTeX code.",
+        messages: [{ role: "user", content: prompt }]
+      });
+
+      const content = message.content[0];
+      if (content.type === 'text') {
+        return cleanLaTeX(content.text);
+      }
+      return '';
+    }
+  } catch (error: any) {
+    console.error('AI Error:', error);
+    throw new Error(`Generation failed (${provider}): ${error.message || 'Unknown error'}`);
+  }
+  
+  return '';
 }
 
 export type ChatMessage = {

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { generateJSONResume } from '../lib/ai';
-import { Download, Sparkles, Loader2, ArrowLeft, LayoutTemplate, Type, History, Edit2, Save, X, Clock } from 'lucide-react';
+import { generateJSONResume, generateLaTeXResume } from '../lib/ai';
+import { Download, Sparkles, Loader2, ArrowLeft, LayoutTemplate, Type, History, Edit2, Save, X, Clock, FileText, Code2, ChevronDown, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ResumeTemplate, TemplateVariant, FontStyle } from '../components/ResumeTemplate';
+import { LATEX_TEMPLATES } from '../lib/latexTemplates';
 
 export default function ResumeBuilder() {
   const { profile, saveResume, apiKeys, preferences } = useStore();
@@ -12,12 +13,21 @@ export default function ResumeBuilder() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedMd, setGeneratedMd] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [templateVariant, setTemplateVariant] = useState<TemplateVariant>('standard');
-  const [fontStyle, setFontStyle] = useState<FontStyle>('sans');
   const [showHistory, setShowHistory] = useState(false);
   const [isEditingJson, setIsEditingJson] = useState(false);
   const [editedJson, setEditedJson] = useState('');
-  
+
+  // LaTeX state
+  const [latexTemplate, setLatexTemplate] = useState('1');
+  const [customLatexTemplate, setCustomLatexTemplate] = useState('');
+  const [latexStyle, setLatexStyle] = useState('Tech / ATS-Optimized');
+  const [latexFont, setLatexFont] = useState('Sans-Serif');
+  const [latexDocType, setLatexDocType] = useState('Resume');
+  const [isGeneratingLatex, setIsGeneratingLatex] = useState(false);
+  const [generatedLatex, setGeneratedLatex] = useState('');
+  const [showLatexView, setShowLatexView] = useState(false);
+  const [regenerationPrompt, setRegenerationPrompt] = useState('');
+
   // also grab resumes from store
   const { resumes, deleteResume } = useStore();
 
@@ -56,7 +66,12 @@ export default function ResumeBuilder() {
     }
 
     try {
-      const jsonStr = await generateJSONResume(fullPromptContext, profileContext);
+      const jsonStr = await generateJSONResume(fullPromptContext, profileContext, {
+        docType: latexDocType,
+        style: latexStyle,
+        font: latexFont,
+        regenerationPrompt
+      });
       setGeneratedMd(jsonStr);
       saveResume({
         jobDescription: fullPromptContext,
@@ -69,6 +84,35 @@ export default function ResumeBuilder() {
     }
   };
 
+  const handleGenerateLatex = async () => {
+    if (!generatedMd) return;
+    
+    // Validate custom template if selected
+    if (latexTemplate === '7' && !customLatexTemplate.trim()) {
+      alert("Please provide your custom LaTeX code.");
+      return;
+    }
+
+    setIsGeneratingLatex(true);
+    try {
+      const baseCode = latexTemplate === '7' ? customLatexTemplate : LATEX_TEMPLATES[latexTemplate];
+      const result = await generateLaTeXResume(
+        generatedMd,
+        latexTemplate,
+        latexStyle,
+        latexFont,
+        latexDocType,
+        baseCode || ''
+      );
+      setGeneratedLatex(result);
+      setShowLatexView(true);
+    } catch (err: any) {
+      alert(err.message || 'LaTeX Generation failed');
+    } finally {
+      setIsGeneratingLatex(false);
+    }
+  };
+
   const handlePrint = () => {
     window.print();
   };
@@ -76,55 +120,129 @@ export default function ResumeBuilder() {
   if (generatedMd) {
     return (
       <div className="h-full flex flex-col bg-[#FAFAFA] dark:bg-[#0A0A0A]">
-        <div className="no-print bg-white dark:bg-[#141414] border-b border-[#E5E5E5] dark:border-gray-800 p-4 flex flex-col sm:flex-row justify-between sm:items-center sticky top-0 z-10 gap-4">
-          <div className="flex items-center gap-4">
-            <button onClick={() => setGeneratedMd(null)} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white shrink-0">
-              <ArrowLeft size={16} /> Back to Editor
-            </button>
-            <div className="h-4 w-px bg-gray-300 dark:bg-gray-700 hidden sm:block"></div>
-            <span className="text-sm font-medium dark:text-gray-200 hidden sm:block">ATS Document Generated</span>
+        <div className="no-print bg-white dark:bg-[#141414] border-b border-[#E5E5E5] dark:border-gray-800 p-4 flex flex-col sm:flex-row justify-between sm:items-start sticky top-0 z-10 gap-4">
+          <div className="flex-1 w-full max-w-xl min-w-0 mr-4 mt-1 flex items-center">
+             <input 
+               type="text" 
+               placeholder="How should I adjust this? (e.g. 'Make it management focused', 'Shorten it')"
+               value={regenerationPrompt}
+               onChange={(e) => setRegenerationPrompt(e.target.value)}
+               onKeyDown={(e) => { if (e.key === 'Enter') { handleGenerate(); } }}
+               className="w-full bg-gray-50 dark:bg-[#2A2A2A] border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-blue-500 transition-colors"
+             />
           </div>
           
-          <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap">
-            <div className="flex items-center bg-gray-100 dark:bg-gray-800 py-1.5 px-3 rounded-lg border border-gray-200 dark:border-gray-700 flex-1 sm:flex-none">
-               <LayoutTemplate size={16} className="text-gray-500 mr-2 shrink-0" />
-               <select 
-                 value={templateVariant}
-                 onChange={(e) => setTemplateVariant(e.target.value as TemplateVariant)}
-                 className="bg-transparent text-sm w-full outline-none text-gray-800 dark:text-gray-200"
-               >
-                 <option value="standard">Standard (ATS)</option>
-                 <option value="compact">Compact (Ultra-Tight)</option>
-                 <option value="modern">Modern (Clean)</option>
-                 <option value="executive">Executive (Classic)</option>
-               </select>
+          <div className="flex flex-col gap-3 w-full sm:w-auto">
+            {/* Template & Styling Tools */}
+            <div className="flex items-center gap-2 flex-wrap sm:justify-end">
+              <div className="flex items-center bg-gray-100 dark:bg-gray-800 py-1.5 px-3 rounded-lg border border-gray-200 dark:border-gray-700 flex-1 sm:flex-none">
+                 <select 
+                   value={latexTemplate} 
+                   onChange={(e) => setLatexTemplate(e.target.value)}
+                   className="bg-transparent text-sm w-full outline-none text-gray-800 dark:text-gray-200 max-w-[150px] truncate"
+                 >
+                   <option value="1">Temp 1 (Tech)</option>
+                   <option value="2">Temp 2 (Modern)</option>
+                   <option value="3">Temp 3 (Minimal)</option>
+                   <option value="4">Temp 4 (Deedy CV)</option>
+                   <option value="5">Temp 5 (Dev Std)</option>
+                   <option value="6">Temp 6 (Academic)</option>
+                   <option value="7">Custom Template</option>
+                 </select>
+              </div>
+
+              <div className="flex items-center bg-gray-100 dark:bg-gray-800 py-1.5 px-3 rounded-lg border border-gray-200 dark:border-gray-700 flex-1 sm:flex-none">
+                 <select 
+                   value={latexStyle} onChange={(e) => setLatexStyle(e.target.value)}
+                   className="bg-transparent text-sm w-full outline-none text-gray-800 dark:text-gray-200 max-w-[150px] truncate"
+                 >
+                   <option value="Minimalist & Clean">Minimalist</option>
+                   <option value="Bold & Modern">Bold Modern</option>
+                   <option value="Academic / Traditional">Academic</option>
+                   <option value="Tech / ATS-Optimized">ATS-Optimized</option>
+                 </select>
+              </div>
+
+              <div className="flex items-center bg-gray-100 dark:bg-gray-800 py-1.5 px-3 rounded-lg border border-gray-200 dark:border-gray-700 flex-1 sm:flex-none">
+                 <select 
+                   value={latexFont} onChange={(e) => setLatexFont(e.target.value)}
+                   className="bg-transparent text-sm w-full outline-none text-gray-800 dark:text-gray-200 max-w-[130px] truncate"
+                 >
+                   <option value="Serif">Serif</option>
+                   <option value="Sans-Serif">Sans-Serif</option>
+                   <option value="Monospace/Typewriter">Monospace</option>
+                   <option value="Compact">Compact</option>
+                   <option value="Spacious">Spacious</option>
+                 </select>
+              </div>
+
+              <div className="flex items-center bg-gray-100 dark:bg-gray-800 py-1.5 px-3 rounded-lg border border-gray-200 dark:border-gray-700 flex-1 sm:flex-none">
+                 <select 
+                   value={latexDocType} onChange={(e) => setLatexDocType(e.target.value)}
+                   className="bg-transparent text-sm w-full outline-none text-gray-800 dark:text-gray-200 max-w-[150px] truncate"
+                 >
+                   <option value="Resume">Resume</option>
+                   <option value="CV">CV</option>
+                   <option value="Resume + Cover Letter">Resume + Cover</option>
+                   <option value="CV + Cover Letter">CV + Cover</option>
+                 </select>
+              </div>
             </div>
+
+            {latexTemplate === '7' && (
+              <div className="flex w-full mt-2">
+                 <textarea 
+                   value={customLatexTemplate}
+                   onChange={(e) => setCustomLatexTemplate(e.target.value)}
+                   className="w-full min-h-[60px] bg-white dark:bg-[#1A1A1A] border border-blue-200 dark:border-blue-800/50 rounded-lg p-2 text-gray-800 dark:text-gray-200 text-xs font-mono outline-none focus:border-blue-500 resize-y"
+                   placeholder="Paste \\documentclass{article}..."
+                 />
+              </div>
+            )}
             
-            <div className="flex items-center bg-gray-100 dark:bg-gray-800 py-1.5 px-3 rounded-lg border border-gray-200 dark:border-gray-700 flex-1 sm:flex-none">
-               <Type size={16} className="text-gray-500 mr-2 shrink-0" />
-               <select 
-                 value={fontStyle}
-                 onChange={(e) => setFontStyle(e.target.value as FontStyle)}
-                 className="bg-transparent text-sm w-full outline-none text-gray-800 dark:text-gray-200"
-               >
-                 <option value="sans">Sans-Serif</option>
-                 <option value="serif">Serif (LaTeX)</option>
-                 <option value="mono">Monospace</option>
-               </select>
+            {/* Button Actions */}
+            <div className="flex items-center gap-2 flex-wrap sm:justify-end">
+              <button 
+                onClick={() => {
+                  if (!isEditingJson) setEditedJson(generatedMd || '');
+                  setIsEditingJson(!isEditingJson);
+                  setGeneratedLatex('');
+                }} 
+                className="flex items-center justify-center gap-2 bg-gray-200 text-gray-800 dark:bg-gray-800 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors text-sm font-medium shrink-0"
+              >
+                {isEditingJson ? <><Save size={16} /> Save Data</> : <><Edit2 size={16} /> Edit Data</>}
+              </button>
+
+              <button 
+                onClick={handleGenerate}
+                disabled={isGenerating}
+                className="flex items-center justify-center gap-2 bg-slate-800 text-white dark:bg-slate-700 px-4 py-2 rounded-lg hover:bg-slate-900 transition-colors text-sm font-medium shrink-0 disabled:opacity-50"
+              >
+                {isGenerating ? <><Loader2 size={16} className="animate-spin" /> ...</> : <><Sparkles size={16} /> Regenerate</>}
+              </button>
+
+              <button 
+                onClick={() => {
+                  if (showLatexView) {
+                    setShowLatexView(false);
+                  } else {
+                    if (generatedLatex) {
+                       setShowLatexView(true);
+                    } else {
+                       handleGenerateLatex();
+                    }
+                  }
+                }}
+                disabled={isGeneratingLatex}
+                className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium shrink-0 disabled:opacity-50"
+              >
+                {isGeneratingLatex ? <><Loader2 size={16} className="animate-spin" /> ...</> : showLatexView ? <><LayoutTemplate size={16} /> Show Visual</> : <><FileText size={16} /> Export to LaTeX</>}
+              </button>
+
+              <button onClick={handlePrint} className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shrink-0">
+                <Download size={16} /> Save PDF
+              </button>
             </div>
-            
-            <button 
-              onClick={() => {
-                if (!isEditingJson) setEditedJson(generatedMd || '');
-                setIsEditingJson(!isEditingJson);
-              }} 
-              className="flex items-center justify-center gap-2 bg-gray-200 text-gray-800 dark:bg-gray-800 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors text-sm font-medium shrink-0"
-            >
-              {isEditingJson ? <><Save size={16} /> Save Data</> : <><Edit2 size={16} /> Edit Data</>}
-            </button>
-            <button onClick={handlePrint} className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shrink-0">
-              <Download size={16} /> Save PDF
-            </button>
           </div>
         </div>
         
@@ -155,8 +273,38 @@ export default function ResumeBuilder() {
                  spellCheck="false"
                />
              </div>
+           ) : showLatexView && generatedLatex ? (
+              <div className="max-w-[850px] mx-auto h-full flex flex-col space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium text-green-600 dark:text-green-500 flex items-center gap-1"><Check size={16}/> LaTeX Generation Complete</span>
+                  <div className="flex gap-4 items-center">
+                    <button onClick={() => {
+                        const element = document.createElement("a");
+                        const file = new Blob([generatedLatex], {type: 'text/plain'});
+                        element.href = URL.createObjectURL(file);
+                        element.download = "resume.tex";
+                        document.body.appendChild(element); // Required for this to work in FireFox
+                        element.click();
+                        document.body.removeChild(element);
+                    }} className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 text-sm font-bold flex items-center gap-1"><Download size={14} /> Download .tex</button>
+                    <button onClick={() => {
+                        navigator.clipboard.writeText(generatedLatex);
+                        alert("LaTeX copied to clipboard!");
+                    }} className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium flex items-center gap-1"><FileText size={14} /> Copy LaTeX</button>
+                  </div>
+                </div>
+                <textarea 
+                  value={generatedLatex} 
+                  readOnly 
+                  className="w-full flex-1 min-h-[600px] p-4 font-mono text-xs md:text-sm bg-gray-50 dark:bg-[#1A1A1A] border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none dark:text-gray-300" 
+                />
+              </div>
            ) : (
-             <ResumeTemplate content={generatedMd} variant={templateVariant} fontStyle={fontStyle} />
+             <ResumeTemplate 
+               content={generatedMd} 
+               variant={latexTemplate === '2' ? 'modern' : latexTemplate === '3' ? 'executive' : latexTemplate === '4' ? 'compact' : 'standard'} 
+               fontStyle={latexFont.toLowerCase().includes('sans') ? 'sans' : latexFont.toLowerCase().includes('serif') ? 'serif' : latexFont.toLowerCase().includes('mono') ? 'mono' : 'sans'} 
+             />
            )}
         </div>
       </div>

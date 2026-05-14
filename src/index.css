@@ -31,8 +31,14 @@
 
   /* Printable styles for ATS-friendly resumes */
   @media print {
+    @page {
+      size: A4;
+      margin: 12.7mm;
+    }
     body {
       background-color: white;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
     .no-print {
       display: none !important;

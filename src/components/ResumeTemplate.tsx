@@ -19,7 +19,7 @@ export function ResumeTemplate({ content, variant = 'standard', fontStyle = 'san
     return <div className="text-red-500">Failed to render resume. Invalid data format.</div>;
   }
 
-  const { personalInfo = {}, education = [], experience = [], projects = [], skills = {}, certifications = [], awards = [] } = data;
+  const { personalInfo = {}, education = [], experience = [], projects = [], skills = {}, certifications = [], awards = [], coverLetter } = data;
 
   const getFontFamily = () => {
     switch (fontStyle) {
@@ -103,15 +103,15 @@ export function ResumeTemplate({ content, variant = 'standard', fontStyle = 'san
   const SectionHeader = ({ title }: { title: string }) => {
     switch (variant) {
       case 'modern':
-        return <h2 className="text-xs font-bold tracking-wide text-gray-900 bg-gray-100 py-0.5 px-2 mb-1 uppercase">{title}</h2>;
+        return <h2 className="text-xs font-bold tracking-wide text-gray-900 bg-gray-100 py-0.5 px-2 mb-1 uppercase break-after-avoid">{title}</h2>;
       case 'executive':
-        return <h2 className="text-[13px] font-bold tracking-widest text-black border-b border-black pb-0.5 mb-1 mt-2 uppercase">{title}</h2>;
+        return <h2 className="text-[13px] font-bold tracking-widest text-black border-b border-black pb-0.5 mb-1 mt-2 uppercase break-after-avoid">{title}</h2>;
       case 'compact':
-        return <h2 className="text-[12px] font-bold tracking-tight text-black border-b border-gray-400 pb-0 mb-1 mt-1 uppercase">{title}</h2>;
+        return <h2 className="text-[12px] font-bold tracking-tight text-black border-b border-gray-400 pb-0 mb-1 mt-1 uppercase break-after-avoid">{title}</h2>;
       case 'standard':
       default:
         return (
-          <div className="mb-1 mt-1.5">
+          <div className="mb-1 mt-1.5 break-after-avoid">
             <h2 className="text-[12px] font-bold tracking-widest text-slate-900 border-b border-black pb-0.5 mb-1 uppercase">
               {title}
             </h2>
@@ -121,21 +121,33 @@ export function ResumeTemplate({ content, variant = 'standard', fontStyle = 'san
   };
 
   const LayoutClass = variant === 'compact' 
-    ? "bg-white p-[0.4in] max-w-[850px] mx-auto min-h-[11in] text-black shadow-xl border border-gray-200 print:shadow-none print:border-none print:p-0 print:w-[8.5in] print:h-[11in] text-[12px] leading-tight"
-    : "bg-white p-[0.5in] max-w-[850px] mx-auto min-h-[11in] text-black shadow-xl border border-gray-200 print:shadow-none print:border-none print:p-0 print:w-[8.5in] print:h-[11in] text-[13px] leading-snug";
+    ? "bg-white p-[0.4in] max-w-[850px] mx-auto min-h-[11in] text-black shadow-xl border border-gray-200 print:shadow-none print:border-none print:p-0 print:w-[210mm] print:h-auto text-[12px] leading-tight"
+    : "bg-white p-[0.5in] max-w-[850px] mx-auto min-h-[11in] text-black shadow-xl border border-gray-200 print:shadow-none print:border-none print:p-0 print:w-[210mm] print:h-auto text-[13px] leading-snug";
 
   return (
     <div className={cn(LayoutClass, getFontFamily())}>
       
       <Header />
 
+      {/* Cover Letter */}
+      {coverLetter && (
+        <div 
+          className="mb-8 pb-8 border-b-2 border-dashed border-gray-300 print:border-none print:mb-0 print:pb-0" 
+          style={{ pageBreakAfter: 'always' }}
+        >
+          <div className="whitespace-pre-wrap leading-relaxed mt-4">
+             {coverLetter}
+          </div>
+        </div>
+      )}
+
       {/* Experience */}
-      {experience.length > 0 && (
+      {(experience?.length || 0) > 0 && (
         <div className="mb-1">
           <SectionHeader title="EXPERIENCE" />
           <div className={cn((variant === 'standard' || variant === 'compact') ? "pl-1" : "")}>
             {experience.map((exp: any, i: number) => (
-              <div key={i} className={variant === 'compact' ? "mb-1" : "mb-2"}>
+              <div key={i} className={cn(variant === 'compact' ? "mb-1" : "mb-2", "break-inside-avoid")}>
                 <div className="flex justify-between font-bold">
                   <span>{exp.role} <span className="font-normal">— {exp.company}</span></span>
                   <span className="font-normal italic text-xs">{exp.startDate} – {exp.endDate}</span>
@@ -152,12 +164,12 @@ export function ResumeTemplate({ content, variant = 'standard', fontStyle = 'san
       )}
 
       {/* Projects */}
-      {projects.length > 0 && (
+      {(projects?.length || 0) > 0 && (
         <div className="mb-1">
           <SectionHeader title="PROJECTS" />
           <div className={cn((variant === 'standard' || variant === 'compact') ? "pl-1" : "")}>
             {projects.map((proj: any, i: number) => (
-              <div key={i} className={variant === 'compact' ? "mb-1" : "mb-1.5"}>
+              <div key={i} className={cn(variant === 'compact' ? "mb-1" : "mb-1.5", "break-inside-avoid")}>
                 <div className="flex justify-between font-bold">
                   <span>{proj.name} {proj.technologies && <span className="font-normal italic text-[11px] ml-1">({proj.technologies.join(', ')})</span>}</span>
                   {proj.link && <a href={proj.link} className="text-blue-700 font-normal underline text-[11px]">View</a>}
@@ -172,12 +184,12 @@ export function ResumeTemplate({ content, variant = 'standard', fontStyle = 'san
       )}
 
       {/* Education */}
-      {education.length > 0 && (
+      {(education?.length || 0) > 0 && (
         <div className="mb-1">
           <SectionHeader title="EDUCATION" />
           <div className={cn((variant === 'standard' || variant === 'compact') ? "pl-1" : "")}>
             {education.map((edu: any, i: number) => (
-              <div key={i} className={variant === 'compact' ? "mb-0.5" : "mb-1"}>
+              <div key={i} className={cn(variant === 'compact' ? "mb-0.5" : "mb-1", "break-inside-avoid")}>
                 <div className="flex justify-between font-bold">
                   <span>{edu.institution}</span>
                   <span className="font-normal italic text-xs">{edu.startDate} – {edu.endDate}</span>
@@ -194,7 +206,7 @@ export function ResumeTemplate({ content, variant = 'standard', fontStyle = 'san
 
       {/* Technical Skills */}
       {Object.keys(skills || {}).length > 0 && (
-        <div className="mb-1">
+        <div className="mb-1 break-inside-avoid">
           <SectionHeader title="TECHNICAL SKILLS" />
           <div className={cn((variant === 'standard' || variant === 'compact') ? "pl-1" : "")}>
             <table className={cn("w-full", variant === 'compact' ? "text-[11px]" : "text-xs")}>
@@ -212,15 +224,15 @@ export function ResumeTemplate({ content, variant = 'standard', fontStyle = 'san
       )}
 
       {/* Certifications and Awards */}
-      {(certifications.length > 0 || awards.length > 0) && (
-        <div className="mb-1">
+      {((certifications?.length || 0) > 0 || (awards?.length || 0) > 0) && (
+        <div className="mb-1 break-inside-avoid">
           <SectionHeader title="AWARDS & CERTIFICATIONS" />
           <div className={cn((variant === 'standard' || variant === 'compact') ? "pl-1" : "")}>
             <ul className={cn("list-dash pl-4 space-y-0.5", variant === 'compact' ? "text-[11px]" : "text-xs")}>
-              {awards.map((award: string, i: number) => (
+              {awards?.map((award: string, i: number) => (
                  <li key={`a-${i}`} className={cn("pl-1 relative before:absolute before:-left-3 before:top-0", variant === 'modern' ? "before:content-['•']" : "before:content-['–']")}>{award}</li>
               ))}
-              {certifications.map((cert: any, i: number) => (
+              {certifications?.map((cert: any, i: number) => (
                  <li key={`c-${i}`} className={cn("pl-1 relative before:absolute before:-left-3 before:top-0", variant === 'modern' ? "before:content-['•']" : "before:content-['–']")}>
                    <span className="font-bold">{cert.name}</span> — {cert.issuer}
                    {cert.link && <a href={cert.link} className="text-blue-700 ml-2">Verify</a>}
