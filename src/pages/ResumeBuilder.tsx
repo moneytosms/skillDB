@@ -5,8 +5,7 @@ import { Download, Sparkles, Loader2, ArrowLeft, LayoutTemplate, Type, History, 
 import { Link } from 'react-router-dom';
 import { ResumeTemplate, TemplateVariant, FontStyle } from '../components/ResumeTemplate';
 import { LATEX_TEMPLATES } from '../lib/latexTemplates';
-// @ts-ignore
-import html2pdf from 'html2pdf.js';
+import { useReactToPrint } from 'react-to-print';
 
 export default function ResumeBuilder() {
   const { profile, saveResume, apiKeys, preferences } = useStore();
@@ -117,27 +116,12 @@ export default function ResumeBuilder() {
     }
   };
 
-  const handleDownloadPDF = async () => {
-    if (!generatedMd || !resumeRef.current) return;
-    setIsCompilingPDF(true);
-
-    try {
-      const element = resumeRef.current;
-      const opt = {
-        margin:       10,
-        filename:     `${profile.personalInfo.name ? profile.personalInfo.name.replace(/\s+/g, '_') : 'resume'}.pdf`,
-        image:        { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
-      };
-
-      await html2pdf().from(element).set(opt).save();
-    } catch (err: any) {
-      alert(err.message || 'Error generating PDF');
-    } finally {
-      setIsCompilingPDF(false);
-    }
-  };
+  const handleDownloadPDF = useReactToPrint({
+    content: () => resumeRef.current,
+    documentTitle: `${profile.personalInfo.name ? profile.personalInfo.name.replace(/\s+/g, '_') : 'resume'}`,
+    onBeforePrint: () => setIsCompilingPDF(true),
+    onAfterPrint: () => setIsCompilingPDF(false),
+  });
 
   const handlePrint = () => {
     window.print();
@@ -265,9 +249,11 @@ export default function ResumeBuilder() {
                 {isGeneratingLatex ? <><Loader2 size={16} className="animate-spin" /> ...</> : showLatexView ? <><LayoutTemplate size={16} /> View HTML Preview</> : <><FileText size={16} /> View LaTeX Code</>}
               </button>
 
-              <button onClick={handleDownloadPDF} disabled={isCompilingPDF} className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shrink-0 disabled:opacity-50">
-                {isCompilingPDF ? <><Loader2 size={16} className="animate-spin" /> Compiling...</> : <><Download size={16} /> Download A4 PDF</>}
-              </button>
+              {!showLatexView && (
+                <button onClick={handleDownloadPDF} disabled={isCompilingPDF} className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shrink-0 disabled:opacity-50">
+                  {isCompilingPDF ? <><Loader2 size={16} className="animate-spin" /> Compiling...</> : <><Download size={16} /> Download A4 PDF</>}
+                </button>
+              )}
             </div>
           </div>
         </div>

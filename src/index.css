@@ -32,11 +32,11 @@
   /* Printable styles for ATS-friendly resumes */
   @media print {
     @page {
-      size: A4;
-      margin: 0.5in;
+      size: default;
+      margin: 10mm;
     }
     body {
-      background-color: white;
+      background-color: white !important;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
@@ -46,6 +46,21 @@
     .print-only {
       display: block !important;
     }
+    
+    /* Prevent weird cutoffs */
+    h1, h2, h3, h4, h5, h6 {
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+    .resume-section {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .resume-item {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
     .markdown-preview {
       font-size: 11pt;
       line-height: 1.5;
