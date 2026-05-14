@@ -1,10 +1,10 @@
 import { useState, useRef } from 'react';
 import { useStore } from '../store/useStore';
-import { generateJSONResume, generateLaTeXResume } from '../lib/ai';
+import { generateJSONResume } from '../lib/ai';
 import { Download, Sparkles, Loader2, ArrowLeft, LayoutTemplate, Type, History, Edit2, Save, X, Clock, FileText, Code2, ChevronDown, Check, Info } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ResumeTemplate, TemplateVariant, FontStyle } from '../components/ResumeTemplate';
-import { LATEX_TEMPLATES } from '../lib/latexTemplates';
+import { jsonToLatex } from '../lib/latexGenerator';
 import { useReactToPrint } from 'react-to-print';
 
 export default function ResumeBuilder() {
@@ -20,7 +20,6 @@ export default function ResumeBuilder() {
 
   // LaTeX state
   const [latexTemplate, setLatexTemplate] = useState('1');
-  const [customLatexTemplate, setCustomLatexTemplate] = useState('');
   const [latexStyle, setLatexStyle] = useState('Tech / ATS-Optimized');
   const [latexFont, setLatexFont] = useState('Sans-Serif');
   const [latexDocType, setLatexDocType] = useState('Resume');
@@ -89,24 +88,9 @@ export default function ResumeBuilder() {
 
   const handleGenerateLatex = async () => {
     if (!generatedMd) return;
-    
-    // Validate custom template if selected
-    if (latexTemplate === '7' && !customLatexTemplate.trim()) {
-      alert("Please provide your custom LaTeX code.");
-      return;
-    }
-
     setIsGeneratingLatex(true);
     try {
-      const baseCode = latexTemplate === '7' ? customLatexTemplate : LATEX_TEMPLATES[latexTemplate];
-      const result = await generateLaTeXResume(
-        generatedMd,
-        latexTemplate,
-        latexStyle,
-        latexFont,
-        latexDocType,
-        baseCode || ''
-      );
+      const result = jsonToLatex(generatedMd, latexTemplate, latexFont.toLowerCase().includes('sans') ? 'sans' : latexFont.toLowerCase().includes('serif') ? 'serif' : latexFont.toLowerCase().includes('mono') ? 'mono' : 'sans');
       setGeneratedLatex(result);
       setShowLatexView(true);
     } catch (err: any) {
@@ -157,7 +141,6 @@ export default function ResumeBuilder() {
                    <option value="4">Temp 4 (Deedy CV)</option>
                    <option value="5">Temp 5 (Dev Std)</option>
                    <option value="6">Temp 6 (Academic)</option>
-                   <option value="7">Custom Template</option>
                  </select>
               </div>
 
@@ -198,17 +181,6 @@ export default function ResumeBuilder() {
                  </select>
               </div>
             </div>
-
-            {latexTemplate === '7' && (
-              <div className="flex w-full mt-2">
-                 <textarea 
-                   value={customLatexTemplate}
-                   onChange={(e) => { setCustomLatexTemplate(e.target.value); setGeneratedLatex(''); setShowLatexView(false); }}
-                   className="w-full min-h-[60px] bg-white dark:bg-[#1A1A1A] border border-blue-200 dark:border-blue-800/50 rounded-lg p-2 text-gray-800 dark:text-gray-200 text-xs font-mono outline-none focus:border-blue-500 resize-y"
-                   placeholder="Paste \\documentclass{article}..."
-                 />
-              </div>
-            )}
             
             {/* Button Actions */}
             <div className="flex items-center gap-2 flex-wrap sm:justify-end">

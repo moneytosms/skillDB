@@ -5,6 +5,46 @@ import Anthropic from '@anthropic-ai/sdk';
 import { useStore } from '../store/useStore';
 import { v4 as uuidv4 } from 'uuid';
 
+const cleanJSON = (text: string) => {
+  let cleaned = text.trim();
+  if (cleaned.startsWith('\`\`\`json')) cleaned = cleaned.replace(/^\`\`\`json/, '');
+  if (cleaned.startsWith('\`\`\`')) cleaned = cleaned.replace(/^\`\`\`/, '');
+  if (cleaned.endsWith('\`\`\`')) cleaned = cleaned.replace(/\`\`\`$/, '');
+  return cleaned.trim();
+};
+
+const executeWithRotation = async (providerName: string, keysString: string | undefined | null, operation: (key: string) => Promise<any>) => {
+  let keys = (keysString || '').split(',').map(k => k.trim()).filter(k => k.length > 0);
+  if (providerName === 'gemini' && keys.length === 0) {
+     const envKey = process.env.GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY;
+     if (envKey) keys = envKey.split(',').map((k: string) => k.trim()).filter((k: string) => k.length > 0);
+  }
+  
+  if (keys.length === 0) throw new Error(`No ${providerName.toUpperCase()} API key found. Please add it in settings (comma-separated for rotation).`);
+  
+  // Shuffle the keys to balance load
+  let availableKeys = [...keys].sort(() => Math.random() - 0.5);
+  let lastError: any = null;
+
+  for (const key of availableKeys) {
+    try {
+      return await operation(key);
+    } catch (error: any) {
+      lastError = error;
+      const msg = error.message?.toLowerCase() || '';
+      const status = error.status || error.response?.status;
+      const isRateLimit = status === 429 || msg.includes('rate limit') || msg.includes('too many requests') || status === 402 || status === 403 || msg.includes('quota') || msg.includes('insufficient_quota') || msg.includes('balance') || msg.includes('credit');
+      
+      if (isRateLimit && availableKeys.length > 1) {
+        console.warn(`[${providerName}] Key hits limit/quota, rotating to next key...`);
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw lastError;
+};
+
 export async function extractProfileFromText(textContext: string, existingProfile?: any): Promise<any> {
   const { apiKeys, preferences } = useStore.getState();
   const provider = preferences.aiProvider || 'gemini';
@@ -139,78 +179,67 @@ export async function extractProfileFromText(textContext: string, existingProfil
   }
   `;
 
-  const cleanJSON = (text: string) => {
-    let cleaned = text.trim();
-    if (cleaned.startsWith('\`\`\`json')) cleaned = cleaned.replace(/^\`\`\`json/, '');
-    if (cleaned.startsWith('\`\`\`')) cleaned = cleaned.replace(/^\`\`\`/, '');
-    if (cleaned.endsWith('\`\`\`')) cleaned = cleaned.replace(/\`\`\`$/, '');
-    return cleaned.trim();
-  };
-
   let jsonStr = '{}';
 
   try {
     if (provider === 'gemini') {
-      let apiKey = apiKeys.gemini || process.env.GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY;
-      if (!apiKey) throw new Error('No Gemini API key found. Please add it in settings.');
-
-      const ai = new GoogleGenAI({ apiKey });
-      const response = await ai.models.generateContent({
-        model: model,
-        contents: prompt,
-        config: {
-          systemInstruction: "You are an expert extractor. Always structure the output in clean JSON. No markdown wrappers.",
-          temperature: 0.1,
-        }
+      jsonStr = await executeWithRotation('gemini', apiKeys.gemini, async (apiKey) => {
+        const ai = new GoogleGenAI({ apiKey });
+        const response = await ai.models.generateContent({
+          model: model,
+          contents: prompt,
+          config: {
+            systemInstruction: "You are an expert extractor. Always structure the output in clean JSON. No markdown wrappers.",
+            temperature: 0.1,
+          }
+        });
+        return cleanJSON(response.text || '{}');
       });
-      jsonStr = cleanJSON(response.text || '{}');
     } else if (provider === 'groq') {
-      let apiKey = apiKeys.groq;
-      if (!apiKey) throw new Error('No Groq API key found. Please add it in settings.');
-
-      const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
-      const chatCompletion = await groq.chat.completions.create({
-        messages: [
-          { role: "system", content: "You are an expert data extractor. Output only strict JSON." },
-          { role: "user", content: prompt },
-        ],
-        model: model,
-        temperature: 0.1,
-        response_format: { type: "json_object" }
+      jsonStr = await executeWithRotation('groq', apiKeys.groq, async (apiKey) => {
+        const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
+        const chatCompletion = await groq.chat.completions.create({
+          messages: [
+            { role: "system", content: "You are an expert data extractor. Output only strict JSON." },
+            { role: "user", content: prompt },
+          ],
+          model: model,
+          temperature: 0.1,
+          response_format: { type: "json_object" }
+        });
+        return cleanJSON(chatCompletion.choices[0]?.message?.content || '{}');
       });
-      jsonStr = cleanJSON(chatCompletion.choices[0]?.message?.content || '{}');
     } else if (provider === 'openai') {
-      let apiKey = apiKeys.openai;
-      if (!apiKey) throw new Error('No OpenAI API key found. Please add it in settings.');
-
-      const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
-      const chatCompletion = await openai.chat.completions.create({
-        messages: [
-          { role: "system", content: "You are an expert data extractor. Output only strict JSON." },
-          { role: "user", content: prompt },
-        ],
-        model: model,
-        temperature: 0.1,
-        response_format: { type: "json_object" }
+      jsonStr = await executeWithRotation('openai', apiKeys.openai, async (apiKey) => {
+        const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+        const chatCompletion = await openai.chat.completions.create({
+          messages: [
+            { role: "system", content: "You are an expert data extractor. Output only strict JSON." },
+            { role: "user", content: prompt },
+          ],
+          model: model,
+          temperature: 0.1,
+          response_format: { type: "json_object" }
+        });
+        return cleanJSON(chatCompletion.choices[0]?.message?.content || '{}');
       });
-      jsonStr = cleanJSON(chatCompletion.choices[0]?.message?.content || '{}');
     } else if (provider === 'anthropic') {
-      let apiKey = apiKeys.anthropic;
-      if (!apiKey) throw new Error('No Anthropic API key found. Please add it in settings.');
+      jsonStr = await executeWithRotation('anthropic', apiKeys.anthropic, async (apiKey) => {
+        const anthropic = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+        const message = await anthropic.messages.create({
+          model: model,
+          max_tokens: 4096,
+          temperature: 0.1,
+          system: "You are an expert data extractor. Output only strict JSON. Do not include any markdown formatting or explanations.",
+          messages: [{ role: "user", content: prompt }]
+        });
 
-      const anthropic = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
-      const message = await anthropic.messages.create({
-        model: model,
-        max_tokens: 4096,
-        temperature: 0.1,
-        system: "You are an expert data extractor. Output only strict JSON. Do not include any markdown formatting or explanations.",
-        messages: [{ role: "user", content: prompt }]
+        const content = message.content[0];
+        if (content.type === 'text') {
+          return cleanJSON(content.text);
+        }
+        return '{}';
       });
-
-      const content = message.content[0];
-      if (content.type === 'text') {
-        jsonStr = cleanJSON(content.text);
-      }
     }
     
     // Parse the JSON and add IDs
@@ -346,100 +375,65 @@ export async function generateJSONResume(jobDescription: string, profileContext:
   IMPORTANT: Extract and map the user's data into these fields. For 'skills' object, try to map their skills into categories like Programming, Web, Databases, Tools, etc. For experience descriptions, enhance their bullet points to emphasize impact related to the job description if possible. Extract applicable content from 'miscellaneous' into 'awards' and 'certifications'.
   `;
 
-  const cleanJSON = (text: string) => {
-    let cleaned = text.trim();
-    if (cleaned.startsWith('\`\`\`json')) cleaned = cleaned.replace(/^\`\`\`json/, '');
-    if (cleaned.startsWith('\`\`\`')) cleaned = cleaned.replace(/^\`\`\`/, '');
-    if (cleaned.endsWith('\`\`\`')) cleaned = cleaned.replace(/\`\`\`$/, '');
-    return cleaned.trim();
-  };
-
   try {
     if (provider === 'gemini') {
-      let apiKey = apiKeys.gemini || process.env.GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY;
-      if (!apiKey) throw new Error('No Gemini API key found. Please add it in settings.');
-
-      const ai = new GoogleGenAI({ apiKey });
-      const response = await ai.models.generateContent({
-        model: model,
-        contents: prompt,
-        config: {
-          systemInstruction: "You are an expert technical resume writer. Always structure the output in clean JSON. No markdown wrappers.",
-          temperature: 0.3,
-        }
-      });
-
-      return cleanJSON(response.text || '{}');
-    } else if (provider === 'groq') {
-      let apiKey = apiKeys.groq;
-      if (!apiKey) throw new Error('No Groq API key found. Please add it in settings.');
-
-      const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
-      
-      const chatCompletion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: "system",
-            content: "You are an expert technical resume writer. Output only strict JSON.",
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        model: model,
-        temperature: 0.3,
-        response_format: { type: "json_object" }
-      });
-
-      return chatCompletion.choices[0]?.message?.content || '{}';
-    } else if (provider === 'openai') {
-      let apiKey = apiKeys.openai;
-      if (!apiKey) throw new Error('No OpenAI API key found. Please add it in settings.');
-
-      const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
-      
-      const chatCompletion = await openai.chat.completions.create({
-        messages: [
-          {
-            role: "system",
-            content: "You are an expert technical resume writer. Output only strict JSON.",
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        model: model,
-        temperature: 0.3,
-        response_format: { type: "json_object" }
-      });
-
-      return chatCompletion.choices[0]?.message?.content || '{}';
-    } else if (provider === 'anthropic') {
-      let apiKey = apiKeys.anthropic;
-      if (!apiKey) throw new Error('No Anthropic API key found. Please add it in settings.');
-
-      const anthropic = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
-      
-      const message = await anthropic.messages.create({
-        model: model,
-        max_tokens: 4096,
-        temperature: 0.3,
-        system: "You are an expert technical resume writer. Output only strict JSON. Do not include any markdown formatting or explanations.",
-        messages: [
-          {
-            role: "user",
-            content: prompt,
+      return await executeWithRotation('gemini', apiKeys.gemini, async (apiKey) => {
+        const ai = new GoogleGenAI({ apiKey });
+        const response = await ai.models.generateContent({
+          model: model,
+          contents: prompt,
+          config: {
+            systemInstruction: "You are an expert technical resume writer. Always structure the output in clean JSON. No markdown wrappers.",
+            temperature: 0.3,
           }
-        ]
+        });
+        return cleanJSON(response.text || '{}');
       });
+    } else if (provider === 'groq') {
+      return await executeWithRotation('groq', apiKeys.groq, async (apiKey) => {
+        const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
+        const chatCompletion = await groq.chat.completions.create({
+          messages: [
+            { role: "system", content: "You are an expert technical resume writer. Output only strict JSON." },
+            { role: "user", content: prompt },
+          ],
+          model: model,
+          temperature: 0.3,
+          response_format: { type: "json_object" }
+        });
+        return chatCompletion.choices[0]?.message?.content || '{}';
+      });
+    } else if (provider === 'openai') {
+      return await executeWithRotation('openai', apiKeys.openai, async (apiKey) => {
+        const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+        const chatCompletion = await openai.chat.completions.create({
+          messages: [
+            { role: "system", content: "You are an expert technical resume writer. Output only strict JSON." },
+            { role: "user", content: prompt },
+          ],
+          model: model,
+          temperature: 0.3,
+          response_format: { type: "json_object" }
+        });
+        return chatCompletion.choices[0]?.message?.content || '{}';
+      });
+    } else if (provider === 'anthropic') {
+      return await executeWithRotation('anthropic', apiKeys.anthropic, async (apiKey) => {
+        const anthropic = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+        const message = await anthropic.messages.create({
+          model: model,
+          max_tokens: 4096,
+          temperature: 0.3,
+          system: "You are an expert technical resume writer. Output only strict JSON. Do not include any markdown formatting or explanations.",
+          messages: [{ role: "user", content: prompt }]
+        });
 
-      const content = message.content[0];
-      if (content.type === 'text') {
-        return cleanJSON(content.text);
-      }
-      return '{}';
+        const content = message.content[0];
+        if (content.type === 'text') {
+          return cleanJSON(content.text);
+        }
+        return '{}';
+      });
     }
   } catch (error: any) {
     console.error('AI Error:', error);
@@ -515,68 +509,61 @@ export async function generateLaTeXResume(
 
   try {
     if (provider === 'gemini') {
-      let apiKey = apiKeys.gemini || process.env.GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY;
-      if (!apiKey) throw new Error('No Gemini API key found. Please add it in settings.');
-
-      const ai = new GoogleGenAI({ apiKey });
-      const response = await ai.models.generateContent({
-        model: model,
-        contents: prompt,
-        config: {
-          systemInstruction: "You are an expert LaTeX developer. Only output valid LaTeX. No markdown explanations.",
-          temperature: 0.2,
-        }
+      return await executeWithRotation('gemini', apiKeys.gemini, async (apiKey) => {
+        const ai = new GoogleGenAI({ apiKey });
+        const response = await ai.models.generateContent({
+          model: model,
+          contents: prompt,
+          config: {
+            systemInstruction: "You are an expert LaTeX developer. Only output valid LaTeX. No markdown explanations.",
+            temperature: 0.2,
+          }
+        });
+        return cleanLaTeX(response.text || '');
       });
-
-      return cleanLaTeX(response.text || '');
     } else if (provider === 'groq') {
-      let apiKey = apiKeys.groq;
-      if (!apiKey) throw new Error('No Groq API key found. Please add it in settings.');
-
-      const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
-      const chatCompletion = await groq.chat.completions.create({
-        messages: [
-          { role: "system", content: "You are an expert LaTeX developer. Output ONLY raw LaTeX code inside a single markdown block." },
-          { role: "user", content: prompt },
-        ],
-        model: model,
-        temperature: 0.2,
+      return await executeWithRotation('groq', apiKeys.groq, async (apiKey) => {
+        const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
+        const chatCompletion = await groq.chat.completions.create({
+          messages: [
+            { role: "system", content: "You are an expert LaTeX developer. Output ONLY raw LaTeX code inside a single markdown block." },
+            { role: "user", content: prompt },
+          ],
+          model: model,
+          temperature: 0.2,
+        });
+        return cleanLaTeX(chatCompletion.choices[0]?.message?.content || '');
       });
-
-      return cleanLaTeX(chatCompletion.choices[0]?.message?.content || '');
     } else if (provider === 'openai') {
-      let apiKey = apiKeys.openai;
-      if (!apiKey) throw new Error('No OpenAI API key found. Please add it in settings.');
-
-      const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
-      const chatCompletion = await openai.chat.completions.create({
-        messages: [
-          { role: "system", content: "You are an expert LaTeX developer. Output ONLY raw LaTeX code inside a single markdown block." },
-          { role: "user", content: prompt },
-        ],
-        model: model,
-        temperature: 0.2,
+      return await executeWithRotation('openai', apiKeys.openai, async (apiKey) => {
+        const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+        const chatCompletion = await openai.chat.completions.create({
+          messages: [
+            { role: "system", content: "You are an expert LaTeX developer. Output ONLY raw LaTeX code inside a single markdown block." },
+            { role: "user", content: prompt },
+          ],
+          model: model,
+          temperature: 0.2,
+        });
+        return cleanLaTeX(chatCompletion.choices[0]?.message?.content || '');
       });
-
-      return cleanLaTeX(chatCompletion.choices[0]?.message?.content || '');
     } else if (provider === 'anthropic') {
-      let apiKey = apiKeys.anthropic;
-      if (!apiKey) throw new Error('No Anthropic API key found. Please add it in settings.');
+      return await executeWithRotation('anthropic', apiKeys.anthropic, async (apiKey) => {
+        const anthropic = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+        const message = await anthropic.messages.create({
+          model: model,
+          max_tokens: 4000,
+          temperature: 0.2,
+          system: "You are an expert LaTeX developer. Output ONLY raw LaTeX code.",
+          messages: [{ role: "user", content: prompt }]
+        });
 
-      const anthropic = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
-      const message = await anthropic.messages.create({
-        model: model,
-        max_tokens: 4000,
-        temperature: 0.2,
-        system: "You are an expert LaTeX developer. Output ONLY raw LaTeX code.",
-        messages: [{ role: "user", content: prompt }]
+        const content = message.content[0];
+        if (content.type === 'text') {
+          return cleanLaTeX(content.text);
+        }
+        return '';
       });
-
-      const content = message.content[0];
-      if (content.type === 'text') {
-        return cleanLaTeX(content.text);
-      }
-      return '';
     }
   } catch (error: any) {
     console.error('AI Error:', error);
@@ -608,80 +595,70 @@ ${profileContext}
 
   try {
     if (provider === 'gemini') {
-      let apiKey = apiKeys.gemini || process.env.GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY;
-      if (!apiKey) throw new Error('No Gemini API key found. Please add it in settings.');
-
-      const ai = new GoogleGenAI({ apiKey });
-      
-      const contents = messages.map(m => ({
-        role: m.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: m.content }]
-      }));
-
-      const response = await ai.models.generateContent({
-        model: model,
-        contents: contents,
-        config: {
-          systemInstruction,
-          temperature: 0.7,
-        }
+      return await executeWithRotation('gemini', apiKeys.gemini, async (apiKey) => {
+        const ai = new GoogleGenAI({ apiKey });
+        const contents = messages.map(m => ({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: m.content }]
+        }));
+        const response = await ai.models.generateContent({
+          model: model,
+          contents: contents,
+          config: {
+            systemInstruction,
+            temperature: 0.7,
+          }
+        });
+        return response.text || '';
       });
-      return response.text || '';
     } else if (provider === 'groq') {
-      let apiKey = apiKeys.groq;
-      if (!apiKey) throw new Error('No Groq API key found. Please add it in settings.');
-
-      const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
-      const apiMessages = [
-        { role: "system", content: systemInstruction },
-        ...messages
-      ] as any;
-
-      const chatCompletion = await groq.chat.completions.create({
-        messages: apiMessages,
-        model: model,
-        temperature: 0.7,
+      return await executeWithRotation('groq', apiKeys.groq, async (apiKey) => {
+        const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
+        const apiMessages = [
+          { role: "system", content: systemInstruction },
+          ...messages
+        ] as any;
+        const chatCompletion = await groq.chat.completions.create({
+          messages: apiMessages,
+          model: model,
+          temperature: 0.7,
+        });
+        return chatCompletion.choices[0]?.message?.content || '';
       });
-      return chatCompletion.choices[0]?.message?.content || '';
     } else if (provider === 'openai') {
-      let apiKey = apiKeys.openai;
-      if (!apiKey) throw new Error('No OpenAI API key found. Please add it in settings.');
-
-      const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
-      const apiMessages = [
-        { role: "system", content: systemInstruction },
-        ...messages
-      ] as any;
-
-      const chatCompletion = await openai.chat.completions.create({
-        messages: apiMessages,
-        model: model,
-        temperature: 0.7,
+      return await executeWithRotation('openai', apiKeys.openai, async (apiKey) => {
+        const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+        const apiMessages = [
+          { role: "system", content: systemInstruction },
+          ...messages
+        ] as any;
+        const chatCompletion = await openai.chat.completions.create({
+          messages: apiMessages,
+          model: model,
+          temperature: 0.7,
+        });
+        return chatCompletion.choices[0]?.message?.content || '';
       });
-      return chatCompletion.choices[0]?.message?.content || '';
     } else if (provider === 'anthropic') {
-      let apiKey = apiKeys.anthropic;
-      if (!apiKey) throw new Error('No Anthropic API key found. Please add it in settings.');
-
-      const anthropic = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
-      const apiMessages = messages.map(m => ({
-        role: m.role,
-        content: m.content
-      })) as any;
-
-      const message = await anthropic.messages.create({
-        model: model,
-        max_tokens: 4096,
-        temperature: 0.7,
-        system: systemInstruction,
-        messages: apiMessages,
+      return await executeWithRotation('anthropic', apiKeys.anthropic, async (apiKey) => {
+        const anthropic = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+        const apiMessages = messages.map(m => ({
+          role: m.role,
+          content: m.content
+        })) as any;
+        const message = await anthropic.messages.create({
+          model: model,
+          max_tokens: 4096,
+          temperature: 0.7,
+          system: systemInstruction,
+          messages: apiMessages,
+        });
+        const content = message.content[0];
+        if (content.type === 'text') {
+          return content.text;
+        }
+        return '';
       });
-
-      const content = message.content[0];
-      if (content.type === 'text') {
-        return content.text;
-      }
-      return '';
     }
   } catch (error: any) {
     console.error('Chat Error:', error);

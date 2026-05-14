@@ -130,7 +130,7 @@ export default function Settings() {
           <h2 className="text-xl font-semibold">API Keys (Local Storage)</h2>
         </div>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-          Your keys are saved directly in your browser's local storage. They are never sent to our servers. Because this app is fully local, you own your data.
+          Your keys are saved directly in your browser's local storage. You can provide multiple comma-separated keys for a provider to enable auto-rotation (fallback) in case of rate limits or depleted credits!
         </p>
 
         <div className="bg-white dark:bg-[#1A1A1A] border border-[#E5E5E5] dark:border-gray-800 rounded-xl p-6 shadow-sm space-y-4">
