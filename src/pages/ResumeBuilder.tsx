@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useStore } from '../store/useStore';
 import { generateJSONResume, generateLaTeXResume } from '../lib/ai';
 import { Download, Sparkles, Loader2, ArrowLeft, LayoutTemplate, Type, History, Edit2, Save, X, Clock, FileText, Code2, ChevronDown, Check, Info } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ResumeTemplate, TemplateVariant, FontStyle } from '../components/ResumeTemplate';
 import { LATEX_TEMPLATES } from '../lib/latexTemplates';
+// @ts-ignore
+import html2pdf from 'html2pdf.js';
 
 export default function ResumeBuilder() {
   const { profile, saveResume, apiKeys, preferences } = useStore();
@@ -28,6 +30,7 @@ export default function ResumeBuilder() {
   const [showLatexView, setShowLatexView] = useState(false);
   const [regenerationPrompt, setRegenerationPrompt] = useState('');
   const [isCompilingPDF, setIsCompilingPDF] = useState(false);
+  const resumeRef = useRef<HTMLDivElement>(null);
 
   // also grab resumes from store
   const { resumes, deleteResume } = useStore();
@@ -115,45 +118,22 @@ export default function ResumeBuilder() {
   };
 
   const handleDownloadPDF = async () => {
-    if (!generatedMd) return;
+    if (!generatedMd || !resumeRef.current) return;
     setIsCompilingPDF(true);
-    let latexData = generatedLatex;
+
     try {
-      if (!latexData) {
-        const baseCode = latexTemplate === '7' ? customLatexTemplate : LATEX_TEMPLATES[latexTemplate];
-        latexData = await generateLaTeXResume(
-          generatedMd,
-          latexTemplate,
-          latexStyle,
-          latexFont,
-          latexDocType,
-          baseCode || ''
-        );
-        setGeneratedLatex(latexData);
-      }
+      const element = resumeRef.current;
+      const opt = {
+        margin:       10,
+        filename:     `${profile.personalInfo.name ? profile.personalInfo.name.replace(/\s+/g, '_') : 'resume'}.pdf`,
+        image:        { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
+      };
 
-      const response = await fetch('/api/compile-latex', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ latex: latexData })
-      });
-
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error || 'Failed to compile PDF. It might be due to a LaTeX template error.');
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${profile.personalInfo.name ? profile.personalInfo.name.replace(/\s+/g, '_') : 'resume'}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      await html2pdf().from(element).set(opt).save();
     } catch (err: any) {
-      alert(err.message || 'Error downloading PDF');
+      alert(err.message || 'Error generating PDF');
     } finally {
       setIsCompilingPDF(false);
     }
@@ -353,15 +333,17 @@ export default function ResumeBuilder() {
               </div>
            ) : (
             <>
-             <div className="mb-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-3 rounded-lg flex items-start gap-2 text-amber-800 dark:text-amber-300">
+             <div className="mb-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 p-3 rounded-lg flex items-start gap-2 text-indigo-800 dark:text-indigo-300">
                <Info size={18} className="shrink-0 mt-0.5" />
-               <p className="text-sm"><strong>Note:</strong> This HTML preview is an approximate structural representation. It may naturally differ from the final LaTeX layout. Click <strong>Download A4 PDF</strong> to compile the true LaTeX source.</p>
+               <p className="text-sm"><strong>Note:</strong> What you see below is what you get. Click <strong>Download A4 PDF</strong> to download exactly this preview as a PDF.</p>
              </div>
-             <ResumeTemplate 
-               content={generatedMd} 
-               variant={latexTemplate as any} 
-               fontStyle={latexFont.toLowerCase().includes('sans') ? 'sans' : latexFont.toLowerCase().includes('serif') ? 'serif' : latexFont.toLowerCase().includes('mono') ? 'mono' : 'sans'} 
-             />
+             <div ref={resumeRef}>
+               <ResumeTemplate 
+                 content={generatedMd} 
+                 variant={latexTemplate as any} 
+                 fontStyle={latexFont.toLowerCase().includes('sans') ? 'sans' : latexFont.toLowerCase().includes('serif') ? 'serif' : latexFont.toLowerCase().includes('mono') ? 'mono' : 'sans'} 
+               />
+             </div>
             </>
            )}
         </div>

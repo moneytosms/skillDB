@@ -30,20 +30,27 @@ export const LATEX_TEMPLATES: Record<string, string> = {
 \\raggedright
 \\setlength{\\tabcolsep}{0in}
 
-\\titleformat{\\section}{\\Large\\bfseries\\scshape\\raggedright}{}{0em}{}[\\titlerule]
+\\titleformat{\\section}{\\Large\\bfseries\\scshape\\raggedright}{}{0em}{}[\\vspace{-1pt}\\titlerule\\vspace{2pt}]
 \\pdfgentounicode=1
 
 \\newcommand{\\resumeItem}[1]{\\item\\small{#1}}
 \\newcommand{\\resumeSubheading}[4]{
-\\vspace{-1pt}\\item
-\\begin{tabular*}{0.97\\textwidth}[t]{ l@{\\extracolsep{\\fill}}r}
-\\textbf{#1} & #2 \\\\
-\\textit{#3} & \\textit{#4} \\\\
-\\end{tabular*}\\vspace{-7pt}
+\\vspace{1pt}\\item
+\\begin{tabular*}{1.0\\textwidth}[t]{ l@{\\extracolsep{\\fill}}r}
+\\textbf{#1}\\hspace{2mm}\\textit{#3} & \\textit{\\small #2} \\\\
+\\end{tabular*}\\vspace{-5pt}
+}
+\\newcommand{\\resumeProjectHeading}[4]{
+\\vspace{1pt}\\item
+\\begin{tabular*}{1.0\\textwidth}[t]{ l@{\\extracolsep{\\fill}}r}
+\\textbf{#1}\\hspace{2mm}\\textit{\\small #3} & \\textit{\\small #2} \\\\
+\\end{tabular*}\\vspace{-5pt}
 }
 \\renewcommand\\labelitemii{$\\vcenter{\\hbox{\\tiny$\\bullet$}}$}
-\\newcommand{\\resumeSubHeadingList}{\\begin{itemize}[leftmargin=0.15in, label={}]}
+\\newcommand{\\resumeSubHeadingList}{\\begin{itemize}[leftmargin=0.0in, label={}]}
 \\newcommand{\\resumeSubHeadingListEnd}{\\end{itemize}}
+\\newcommand{\\resumeItemListStart}{\\begin{itemize}[leftmargin=0.15in]}
+\\newcommand{\\resumeItemListEnd}{\\end{itemize}\\vspace{-4pt}}
 
 \\begin{document}
 %% INSERT CONTENT HERE %%
@@ -51,6 +58,7 @@ export const LATEX_TEMPLATES: Record<string, string> = {
 %
 % \\begin{center}
 % \\textbf{\\Huge Alex Webb} \\\\
+% \\vspace{2pt}
 % \\small 555-123-4567 $|$
 % \\href{mailto:alex@email.com}{alex@email.com} $|$
 % \\href{https://linkedin.com/in/alexwebbx}{linkedin.com/in/alexwebbx} $|$
@@ -93,8 +101,8 @@ export const LATEX_TEMPLATES: Record<string, string> = {
 \\setlength{\\tabcolsep}{0in}
 
 \\titleformat{\\section}{
-\\vspace{-4pt}\\scshape\\raggedright\\large
-}{}{0em}{}[\\color{black}\\titlerule\\vspace{-5pt}]
+\\vspace{0pt}\\scshape\\raggedright\\large\\bfseries
+}{}{0em}{}[\\color{black}\\titlerule\\vspace{-2pt}]
 \\pdfgentounicode=1
 
 \\newcommand{\\resumeItem}[1]{
@@ -103,15 +111,20 @@ export const LATEX_TEMPLATES: Record<string, string> = {
   }
 }
 \\newcommand{\\resumeSubheading}[4]{
-  \\vspace{-2pt}\\item
-    \\begin{tabular*}{0.97\\textwidth}[t]{l@{\\extracolsep{\\fill}}r}
-      \\textbf{#1} & #2 \\\\
-      \\textit{\\small#3} & \\textit{\\small #4} \\\\
-    \\end{tabular*}\\vspace{-7pt}
+  \\vspace{1pt}\\item
+    \\begin{tabular*}{1.0\\textwidth}[t]{l@{\\extracolsep{\\fill}}r}
+      \\textbf{#1}\\hspace{2mm}\\textit{\\small #3} & \\textit{\\small #2} \\\\
+    \\end{tabular*}\\vspace{-5pt}
 }
-\\newcommand{\\resumeSubHeadingListStart}{\\begin{itemize}[leftmargin=0.15in, label={}]}
+\\newcommand{\\resumeProjectHeading}[4]{
+  \\vspace{1pt}\\item
+    \\begin{tabular*}{1.0\\textwidth}[t]{l@{\\extracolsep{\\fill}}r}
+      \\textbf{#1}\\hspace{2mm}\\textit{\\small #3} & \\textit{\\small #2} \\\\
+    \\end{tabular*}\\vspace{-5pt}
+}
+\\newcommand{\\resumeSubHeadingListStart}{\\begin{itemize}[leftmargin=0.0in, label={}]}
 \\newcommand{\\resumeSubHeadingListEnd}{\\end{itemize}}
-\\newcommand{\\resumeItemListStart}{\\begin{itemize}}
+\\newcommand{\\resumeItemListStart}{\\begin{itemize}[leftmargin=0.15in]}
 \\newcommand{\\resumeItemListEnd}{\\end{itemize}\\vspace{-5pt}}
 
 \\begin{document}
@@ -120,6 +133,7 @@ export const LATEX_TEMPLATES: Record<string, string> = {
 %
 % \\begin{center}
 % \\textbf{\\Huge Full Name} \\\\
+% \\vspace{2pt}
 % Phone $|$ \\href{mailto:email}{email}
 % \\end{center}
 \\end{document}
@@ -152,15 +166,17 @@ export const LATEX_TEMPLATES: Record<string, string> = {
 \\raggedright
 \\setlength{\\tabcolsep}{0in}
 
+\\definecolor{darkblue}{RGB}{30, 64, 175}
+
 \\titleformat{\\section}{
-\\vspace{-5pt}\\scshape\\raggedright\\large
-}{}{0em}{}[\\color{black}\\titlerule \\vspace{-4pt}]
+\\vspace{2pt}\\scshape\\raggedright\\large\\bfseries\\color{darkblue}
+}{}{0em}{}[\\color{black}\\titlerule \\vspace{-1pt}]
 \\pdfgentounicode=1
 
 \\definecolor{lightyellow}{cmyk}{0.00, 0.05, 0.20, 0.00} 
 \\sethlcolor{lightyellow} 
 
-\\newcommand{\\sectionspace}{\\vspace{-20pt}}
+\\newcommand{\\sectionspace}{\\vspace{-10pt}}
 \\newcommand{\\subheadingtitlevspace}{\\vspace{-3pt}}
 
 \\newcommand{\\resumeItem}[1]{
@@ -172,40 +188,40 @@ export const LATEX_TEMPLATES: Record<string, string> = {
 \\newcommand{\\highlight}[1]{\\textsl{\\textbf{#1}}}
 
 \\newcommand{\\resumeSubheading}[4]{
-\\item
-\\begin{tabular*}{0.97\\textwidth}[t]{ l@{\\extracolsep{\\fill}} l@{}l}
-{#1} & \\titleItem{#3} $|$ {#2} & \\textit{#4}\\\\
-\\end{tabular*}\\vspace{-10pt}
+\\vspace{2pt}\\item
+\\begin{tabular*}{1.0\\textwidth}[t]{ l@{\\extracolsep{\\fill}}r}
+\\colorbox{lightyellow}{\\textbf{#1}} $|$ \\textit{#3} & \\textit{\\small #2}\\\\
+\\end{tabular*}\\vspace{-5pt}
 }
 
 \\newcommand{\\resumeSubSubheading}[2]{
 \\item
-\\begin{tabular*}{0.97\\textwidth}{ l@{\\extracolsep{\\fill}}r}
+\\begin{tabular*}{1.0\\textwidth}{ l@{\\extracolsep{\\fill}}r}
 \\textit{#1} & \\textit{#2} \\\\
 \\end{tabular*}\\vspace{-2pt}
 }
 
 \\newcommand{\\resumeProjectHeading}[4]{
-\\item
-\\begin{tabular*}{0.97\\textwidth}{ l@{\\extracolsep{\\fill}}r}
-#1 & \\textit{#2} \\\\
-\\end{tabular*}\\vspace{-9pt}
+\\vspace{2pt}\\item
+\\begin{tabular*}{1.0\\textwidth}{ l@{\\extracolsep{\\fill}}r}
+\\colorbox{lightyellow}{\\textbf{#1}} \\textit{\\small(#3)} & \\textit{\\small #2} \\\\
+\\end{tabular*}\\vspace{-5pt}
 }
 
-\\newcommand{\\resumeSubHeadingListStart}{\\subheadingtitlevspace\\begin{itemize}[leftmargin=0.15in, label={}]}
+\\newcommand{\\resumeSubHeadingListStart}{\\subheadingtitlevspace\\begin{itemize}[leftmargin=0.0in, label={}]}
 \\newcommand{\\resumeSubHeadingListEnd}{\\end{itemize}}
 
-\\newcommand{\\resumeItemListStart}{\\begin{itemize}}
+\\newcommand{\\resumeItemListStart}{\\begin{itemize}[leftmargin=0.15in]}
 \\newcommand{\\resumeItemListEnd}{\\end{itemize}\\vspace{-8pt}}
 
 \\begin{document}
 %% INSERT CONTENT HERE %%
 % EXAMPLE FOR FLUSHLEFT HEADING:
 % \\begin{flushleft}
-% \\textbf{\\large John Smith} \\\\
+% \\textbf{\\huge John Smith} \\\\
+% \\vspace{2pt}
 % \\textit{Salt Lake City, Utah} $|$ \\textit{111-111-1111} $|$
 % \\href{mailto:email@email.com}{{\\textit{@mail}}}
-% \\vspace{-8pt}
 % \\end{flushleft}
 \\end{document}
 `,
@@ -236,30 +252,28 @@ export const LATEX_TEMPLATES: Record<string, string> = {
 \\fancyfoot{}
 \\renewcommand{\\headrulewidth}{0pt}
 \\renewcommand{\\footrulewidth}{0pt}
-\\geometry{left=1.4cm, top=0.8cm, right=1.2cm, bottom=1cm}
+\\geometry{left=1.4cm, top=1.4cm, right=1.2cm, bottom=1cm}
 
 \\usepackage[most]{tcolorbox}
 \\tcbset{
 frame code={},
 center title,
-left=0pt,
-right=0pt,
-top=0pt,
-bottom=0pt,
+left=4pt,
+right=4pt,
+top=2pt,
+bottom=2pt,
 colback=gray!20,
 colframe=white,
 width=\\dimexpr\\textwidth\\relax,
-enlarge left by=-2mm,
-boxsep=4pt,
-arc=0pt,outer arc=0pt,
+enlarge left by=0mm,
+boxsep=2pt,
+arc=2pt,outer arc=2pt,
 }
 \\urlstyle{same}
 \\raggedright
 \\setlength{\\tabcolsep}{0in}
 
-\\titleformat{\\section}{
-\\vspace{-4pt}\\scshape\\raggedright\\large
-}{}{0em}{}[\\color{black}\\titlerule \\vspace{-7pt}]
+\\titleformat{\\section}{\\vspace{-4pt}\\scshape\\raggedright\\large}{}{0em}{}[\\color{black}\\titlerule \\vspace{-7pt}]
 
 \\newcommand{\\resumeItem}[2]{
 \\item{
@@ -268,31 +282,29 @@ arc=0pt,outer arc=0pt,
 }
 \\newcommand{\\resumePOR}[3]{
 \\vspace{0.5mm}\\item
-\\begin{tabular*}{0.97\\textwidth}[t]{ l@{\\extracolsep{\\fill}}r}
+\\begin{tabular*}{1.0\\textwidth}[t]{ l@{\\extracolsep{\\fill}}r}
 \\textbf{#1}\\hspace{0.3mm}#2 & \\textit{\\small{#3}}
 \\end{tabular*}
 \\vspace{-2mm}
 }
 \\newcommand{\\resumeSubheading}[4]{
-\\vspace{0.5mm}\\item
-\\begin{tabular*}{0.98\\textwidth}[t]{ l@{\\extracolsep{\\fill}}r}
-\\textbf{#1} & \\textit{\\footnotesize{#4}} \\\\
-\\textit{\\footnotesize{#3}} &  \\footnotesize{#2}\\\\
+\\vspace{1.5mm}\\item
+\\begin{tabular*}{1.0\\textwidth}[t]{ l@{\\extracolsep{\\fill}}r}
+\\textbf{#1}\\hspace{2mm}\\textit{\\footnotesize{#3}} & \\textit{\\footnotesize{#2}} \\\\
 \\end{tabular*}
-\\vspace{-2.4mm}
+\\vspace{-3mm}
 }
 \\newcommand{\\resumeProject}[4]{
-\\vspace{0.5mm}\\item
-\\begin{tabular*}{0.98\\textwidth}[t]{ l@{\\extracolsep{\\fill}}r}
-\\textbf{#1} & \\textit{\\footnotesize{#3}} \\\\
-\\footnotesize{\\textit{#2}} & \\footnotesize{#4}
+\\vspace{1.5mm}\\item
+\\begin{tabular*}{1.0\\textwidth}[t]{ l@{\\extracolsep{\\fill}}r}
+\\textbf{#1}\\hspace{2mm}\\textit{\\footnotesize{#3}} & \\textit{\\footnotesize{#2}} \\\\
 \\end{tabular*}
-\\vspace{-2.4mm}
+\\vspace{-3mm}
 }
 \\newcommand{\\resumeSubItem}[2]{\\resumeItem{#1}{#2}\\vspace{-4pt}}
 \\renewcommand{\\labelitemi}{$\\vcenter{\\hbox{\\tiny$\\bullet$}}$}
-\\newcommand{\\resumeSubHeadingListStart}{\\begin{itemize}[leftmargin=*,labelsep=0mm]}
-\\newcommand{\\resumeHeadingSkillStart}{\\begin{itemize}[leftmargin=*,itemsep=1.7mm, rightmargin=2ex]}
+\\newcommand{\\resumeSubHeadingListStart}{\\begin{itemize}[leftmargin=0.0in,labelsep=0mm]}
+\\newcommand{\\resumeHeadingSkillStart}{\\begin{itemize}[leftmargin=0.0in,itemsep=1.7mm, rightmargin=2ex]}
 \\newcommand{\\resumeItemListStart}{\\begin{justify}\\begin{itemize}[leftmargin=3ex, rightmargin=2ex, noitemsep,labelsep=1.2mm,itemsep=0mm]\\small}
 \\newcommand{\\resumeSubHeadingListEnd}{\\end{itemize}\\vspace{2mm}}
 \\newcommand{\\resumeHeadingSkillEnd}{\\end{itemize}\\vspace{-2mm}}
@@ -301,9 +313,9 @@ arc=0pt,outer arc=0pt,
 \\newcommand{\\cvsection}[1]{%
 \\vspace{2mm}
 \\begin{tcolorbox}
-\\textbf{\\large #1}
+\\textbf{\\large\\scshape #1}
 \\end{tcolorbox}
-\\vspace{-4mm}
+\\vspace{-1mm}
 }
 
 \\begin{document}
@@ -357,15 +369,22 @@ arc=0pt,outer arc=0pt,
 
 \\newcommand{\\resumeItem}[1]{\\item\\small{#1}}
 \\newcommand{\\resumeSubheading}[4]{
-\\vspace{-1pt}\\item
-\\begin{tabular*}{0.97\\textwidth}[t]{ l@{\\extracolsep{\\fill}}r}
-\\textbf{#1} & \\textbf{#2} \\\\
-\\textit{#3} & \\textit{#4} \\\\
+\\vspace{1pt}\\item
+\\begin{tabular*}{1.0\\textwidth}[t]{ l@{\\extracolsep{\\fill}}r}
+\\textbf{#1}\\hspace{2mm}\\textit{\\small #3} & \\textit{\\small #2} \\\\
+\\end{tabular*}\\vspace{-5pt}
+}
+\\newcommand{\\resumeProjectHeading}[4]{
+\\vspace{1pt}\\item
+\\begin{tabular*}{1.0\\textwidth}[t]{ l@{\\extracolsep{\\fill}}r}
+\\textbf{#1}\\hspace{2mm}\\textit{\\small #3} & \\textit{\\small #2} \\\\
 \\end{tabular*}\\vspace{-5pt}
 }
 \\renewcommand\\labelitemi{$\\vcenter{\\hbox{\\tiny$\\bullet$}}$}
-\\newcommand{\\resumeSubHeadingList}{\\begin{itemize}[leftmargin=0.15in, label={}]}
+\\newcommand{\\resumeSubHeadingList}{\\begin{itemize}[leftmargin=0.0in, label={}]}
 \\newcommand{\\resumeSubHeadingListEnd}{\\end{itemize}}
+\\newcommand{\\resumeItemListStart}{\\begin{itemize}[leftmargin=0.15in]}
+\\newcommand{\\resumeItemListEnd}{\\end{itemize}\\vspace{-5pt}}
 
 \\pagestyle{empty}
 \\begin{document}
@@ -373,7 +392,7 @@ arc=0pt,outer arc=0pt,
 % Example:
 % \\begin{center}
 % {\\Huge \\textbf{Your Name}} \\\\
-% \\vspace{2mm}
+% \\vspace{2pt}
 % \\small \\href{mailto:email@example.com}{email@example.com} $|$ Phone
 % \\end{center}
 % \\cvsection{Experience}
@@ -386,6 +405,7 @@ arc=0pt,outer arc=0pt,
 \\usepackage{enumitem}
 \\usepackage{titlesec}
 \\usepackage{xcolor}
+\\usepackage{tabularx}
 
 \\definecolor{accent}{RGB}{124, 45, 18} % Deep orange/red accent
 
@@ -393,13 +413,24 @@ arc=0pt,outer arc=0pt,
 
 \\newcommand{\\header}[4]{\\begin{center}{\\Huge\\bfseries\\color{accent} #1}\\\\\\vspace{2mm} \\small #2 $\\vert$ \\href{mailto:#3}{#3} $\\vert$ #4\\end{center}}
 
-\\newcommand{\\subentry}[4]{
-\\vspace{1mm}\\noindent\\textbf{#1}, \\textit{#2} \\hfill \\textbf{\\color{accent}#3}\\\\[1mm]\\noindent\\textit{#4}
+\\newcommand{\\resumeSubheading}[4]{
+\\vspace{1pt}\\item
+\\begin{tabular*}{1.0\\textwidth}[t]{ l@{\\extracolsep{\\fill}}r}
+\\textbf{#1}\\hspace{2mm}\\textit{\\small #3} & \\textbf{\\color{accent}\\small #2} \\\\
+\\end{tabular*}\\vspace{-5pt}
+}
+\\newcommand{\\resumeProjectHeading}[4]{
+\\vspace{1pt}\\item
+\\begin{tabular*}{1.0\\textwidth}[t]{ l@{\\extracolsep{\\fill}}r}
+\\textbf{#1}\\hspace{2mm}\\textit{\\small #3} & \\textbf{\\color{accent}\\small #2} \\\\
+\\end{tabular*}\\vspace{-5pt}
 }
 
+\\newcommand{\\resumeSubHeadingList}{\\begin{itemize}[leftmargin=0.0in, label={}]}
+\\newcommand{\\resumeSubHeadingListEnd}{\\end{itemize}}
 \\newcommand{\\resumeItem}[1]{\\item\\small{#1}}
-\\newcommand{\\resumeItemList}{\\begin{itemize}[leftmargin=*,noitemsep,topsep=2pt]}
-\\newcommand{\\resumeItemListEnd}{\\end{itemize}}
+\\newcommand{\\resumeItemList}{\\begin{itemize}[leftmargin=0.15in,noitemsep,topsep=2pt]}
+\\newcommand{\\resumeItemListEnd}{\\end{itemize}\\vspace{-3pt}}
 
 \\pagestyle{empty}
 \\begin{document}
@@ -407,7 +438,7 @@ arc=0pt,outer arc=0pt,
 % Example:
 % \\header{Jane Doe}{New York}{jane.doe@email.com}{linkedin.com/in/jane}
 % \\section{Work History}
-% \\subentry{Company Name}{Position}{Dates}{Location}
+% \\resumeSubheading{Role}{Date}{Company}{}
 % \\resumeItemList
 % \\resumeItem{Did some work}
 % \\resumeItemListEnd

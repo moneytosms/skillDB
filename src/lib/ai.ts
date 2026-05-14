@@ -253,7 +253,14 @@ export async function generateJSONResume(jobDescription: string, profileContext:
     `;
 
     if (docPrefs.regenerationPrompt) {
-      prefInstructions += `\nUSER REGENERATION INSTRUCTIONS (HIGH PRIORITY STRATEGY):\n"${docPrefs.regenerationPrompt}"\nEnsure you apply these instructions thoughtfully throughout the document!\n`;
+      prefInstructions += `
+      ======================================================================
+      >>> CRITICAL USER REGENERATION INSTRUCTIONS (HIGH PRIORITY) <<<
+      "${docPrefs.regenerationPrompt}"
+      
+      The user was NOT satisfied with the previous generation. You MUST drastically rewrite, reorganize, and adjust the content to explicitly satisfy the prompt above. DO NOT just copy-paste from the original context, and do NOT ignore this prompt. This is the MOST important instruction.
+      ======================================================================
+      `;
     }
   }
 
@@ -274,10 +281,11 @@ export async function generateJSONResume(jobDescription: string, profileContext:
   CRITICAL INSTRUCTIONS:
   1. The generated resume MUST fill the entire page. 
   2. You must curate and order the items carefully: select the most relevant experiences, projects, and skills for the job description. Prioritize and reorder bullets and sections to match the job listing's emphasis.
-  3. DO NOT simply copy-paste from the profile context. You MUST rewrite, elaborate, format, and extrapolate bullet points to be highly professional and impactful. Fix any grammar and capitalization issues (e.g., if a skill is listed as "query optimization", format it properly as "Query Optimization"). Ensure the phrasing uses strong action verbs and quantifies impact where possible.
+  3. ABSOLUTELY DO NOT simply copy-paste from the profile context. You MUST completely rewrite, reframe, and elevate every bullet point to directly speak to the job description and the user's regeneration prompt. Synthesize points where necessary so it reads as a highly professional targeted document. Ensure the phrasing uses strong action verbs, quantifiable metrics, and directly mirrors the target terminology.
   4. Tailor the wording heavily to mirror the job description's terminology, but MAINTAIN INTEGRITY (do not completely fabricate non-existent roles or degrees).
   5. If there is not enough content to fill the page, creatively embellish existing details, expand on responsibilities, add plausible adjacent skills based on their profile, and include relevant miscellaneous/volunteer experiences to ensure the resume looks substantial, full, and perfectly suited to give the user a leg up.
   6. The resume MUST sound like it represents the user perfectly and guarantees them the job. You are generating a final polished document so it should know what it is writing.
+  7. When specifying technologies for projects, output them purely as a comma-separated array of strings. Do not precede them with "Technologies:".
 
   
   {
@@ -480,8 +488,14 @@ export async function generateLaTeXResume(
   Instruction: 
   Adapt the chosen template below to output a COMPLETE, ready-to-compile LaTeX document from the JSON data.
   The template provided includes the \\documentclass, preamble, and custom commands. Replace the '%% INSERT CONTENT HERE %%' blocks with the actual content using the commands defined in the template.
-  IMPORTANT: If the Document Type includes a Cover Letter (or if there is a Cover Letter in the JSON), you MUST place the Cover Letter FIRST in the LaTeX document, then add a \\newpage, and then place the Resume/CV content.
-  Output the final, ready-to-compile LaTeX code in a single code block. Ensure the LaTeX code is complete, ATS-friendly, and has no missing brackets or broken syntax. Do not output anything outside the code block.
+  
+  CRITICAL RULES:
+  1. The Document Type may include a Cover Letter. If there is a Cover Letter in the JSON, you MUST place the Cover Letter FIRST in the LaTeX document, then add a \\newpage, and then place the Resume/CV content.
+  2. Use \\resumeSubheading{Role}{Date}{Company}{Location} for experiences. The template explicitly handles positioning, do NOT manually format the text with pipes or bold unless requested.
+  3. Use \\resumeProjectHeading{Project Name}{Date}{Technologies Used}{Location} for projects. Pass the comma-separated technologies in the 3rd argument. Do NOT write "Technologies:".
+  4. Ensure ALL \\begin{itemize} blocks have matching \\end{itemize} tags.
+  5. Output the final, ready-to-compile LaTeX code in a single code block. Ensure the LaTeX code is complete, ATS-friendly, and has no missing brackets or broken syntax. Do not output anything outside the code block.
+  6. CRITICAL: DO NOT modify, summarize, or alter the wording of the JSON data. Insert the text EXACTLY as provided in the JSON. What you output must EXACTLY MATCH the content of the provided JSON so the resulting LaTeX perfectly matches the user's expected HTML preview.
 
   JSON Resume Data:
   ${jsonResume}

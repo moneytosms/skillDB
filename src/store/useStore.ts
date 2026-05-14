@@ -488,12 +488,24 @@ export const useStore = create<State>()(
             return merged;
           };
 
+          const mergePersonalInfo = (existing: PersonalInfo, incoming?: Partial<PersonalInfo>) => {
+            if (!incoming) return existing;
+            const merged = { ...existing };
+            (Object.keys(incoming) as (keyof PersonalInfo)[]).forEach(key => {
+              const incomingVal = incoming[key];
+              const existingVal = existing[key];
+              // Only overwrite if existing is empty
+              if ((!existingVal || (typeof existingVal === 'string' && existingVal.trim().length === 0)) && 
+                  incomingVal && typeof incomingVal === 'string' && incomingVal.trim().length > 0) {
+                merged[key] = incomingVal;
+              }
+            });
+            return merged;
+          };
+
           return {
             profile: {
-              personalInfo: {
-                ...p.personalInfo,
-                ...(data.personalInfo || {})
-              },
+              personalInfo: mergePersonalInfo(p.personalInfo, data.personalInfo),
               experience: data.experience ? mergeByFields(p.experience, data.experience, ['company', 'role']) : p.experience,
               education: data.education ? mergeByFields(p.education, data.education, ['institution', 'degree']) : p.education,
               projects: data.projects ? mergeByFields(p.projects, data.projects, ['name']) : p.projects,
