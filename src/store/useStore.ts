@@ -147,6 +147,7 @@ interface State {
   createBackup: () => void;
   restoreBackup: (id: string) => void;
   deleteBackup: (id: string) => void;
+  resetStore: () => void;
 }
 
 const defaultPersonalInfo: PersonalInfo = {
@@ -525,6 +526,31 @@ export const useStore = create<State>()(
       deleteBackup: (id: string) =>
         set((state) => ({
           backups: (state.backups || []).filter((b) => b.id !== id),
+        })),
+        
+      resetStore: () =>
+        set((state) => ({
+          profile: {
+            personalInfo: defaultPersonalInfo,
+            experience: [],
+            projects: [],
+            education: [],
+            skills: [],
+            miscellaneous: [],
+          },
+          apiKeys: {
+            gemini: '',
+            openai: '',
+            anthropic: '',
+            groq: '',
+          },
+          preferences: {
+            theme: 'light',
+            aiProvider: 'gemini',
+            aiModel: 'gemini-2.5-pro',
+          },
+          resumes: [],
+          backups: [],
         })),
     }),
     {

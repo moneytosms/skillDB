@@ -30,8 +30,32 @@ export function MagicImport() {
         for (let i = 1; i <= pdf.numPages; i++) {
           const page = await pdf.getPage(i);
           const content = await page.getTextContent();
-          const strings = content.items.map((item: any) => item.str);
-          extractedText += strings.join(' ') + '\\n';
+          const annotations = await page.getAnnotations();
+          const links = annotations.filter((a: any) => a.subtype === 'Link' && !!a.url);
+
+          const strings = content.items.map((item: any) => {
+            if (!item.transform || item.transform.length < 6) return item.str;
+            const tx = item.transform[4];
+            const ty = item.transform[5];
+            for (const link of links) {
+              if (!link.rect || link.rect.length < 4) continue;
+              const [x1, y1, x2, y2] = link.rect;
+              if (tx >= x1 - 5 && tx <= x2 + 5 && ty >= y1 - 5 && ty <= y2 + 5) {
+                return link.url;
+              }
+            }
+            return item.str;
+          });
+
+          const deduplicated = [];
+          for (const str of strings) {
+            if (str && str.startsWith('http') && deduplicated.length > 0 && deduplicated[deduplicated.length - 1] === str) {
+              continue;
+            }
+            deduplicated.push(str);
+          }
+
+          extractedText += deduplicated.join(' ') + '\\n';
         }
         setText(extractedText);
       } else {

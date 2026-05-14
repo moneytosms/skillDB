@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useStore, AppPreferences, PROVIDER_MODELS } from '../store/useStore';
-import { Download, Upload, Save, Shield, FileJson, Moon, Sun, Cpu } from 'lucide-react';
+import { Download, Upload, Save, Shield, FileJson, Moon, Sun, Cpu, AlertTriangle } from 'lucide-react';
 
 export default function Settings() {
-  const { apiKeys, updateApiKeys, profile, resumes, importData, preferences, updatePreferences } = useStore();
+  const { apiKeys, updateApiKeys, profile, resumes, importData, preferences, updatePreferences, resetStore } = useStore();
   const [keysState, setKeysState] = useState(apiKeys);
 
   const handleSaveKeys = () => {
@@ -49,6 +49,14 @@ export default function Settings() {
     const newProvider = e.target.value as AppPreferences['aiProvider'];
     const defaultModelForProvider = PROVIDER_MODELS[newProvider][0];
     updatePreferences({ aiProvider: newProvider, aiModel: defaultModelForProvider });
+  };
+
+  const handleReset = () => {
+    if (window.confirm('Are you absolutely sure you want to delete ALL data? This includes your profile, resumes, API keys, and backups. This action cannot be undone.')) {
+      resetStore();
+      setKeysState({ gemini: '', openai: '', anthropic: '', groq: '' });
+      alert('All data has been reset.');
+    }
   };
 
   return (
@@ -264,6 +272,31 @@ export default function Settings() {
                 ))}
              </div>
           )}
+        </div>
+      </section>
+
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <AlertTriangle className="text-red-600 dark:text-red-500" size={24} />
+          <h2 className="text-xl font-semibold text-red-600 dark:text-red-500">Danger Zone</h2>
+        </div>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+          Irreversible actions to clear your data from this browser.
+        </p>
+
+        <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 rounded-xl p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 className="font-medium text-red-900 dark:text-red-400 text-lg">Clear All Data</h3>
+            <p className="text-sm text-red-700 dark:text-red-500/80 mt-1">
+              Delete your profile, resumes, settings, and API keys. This cannot be undone.
+            </p>
+          </div>
+          <button 
+            onClick={handleReset}
+            className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors shrink-0 text-sm font-medium"
+          >
+            <AlertTriangle size={16} /> Reset Everything
+          </button>
         </div>
       </section>
     </div>

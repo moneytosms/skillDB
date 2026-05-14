@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { generateJSONResume, generateLaTeXResume } from '../lib/ai';
-import { Download, Sparkles, Loader2, ArrowLeft, LayoutTemplate, Type, History, Edit2, Save, X, Clock, FileText, Code2, ChevronDown, Check } from 'lucide-react';
+import { Download, Sparkles, Loader2, ArrowLeft, LayoutTemplate, Type, History, Edit2, Save, X, Clock, FileText, Code2, ChevronDown, Check, Info } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ResumeTemplate, TemplateVariant, FontStyle } from '../components/ResumeTemplate';
 import { LATEX_TEMPLATES } from '../lib/latexTemplates';
@@ -282,11 +282,7 @@ export default function ResumeBuilder() {
                 disabled={isGeneratingLatex}
                 className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium shrink-0 disabled:opacity-50"
               >
-                {isGeneratingLatex ? <><Loader2 size={16} className="animate-spin" /> ...</> : showLatexView ? <><LayoutTemplate size={16} /> Show Visual</> : <><FileText size={16} /> Export to LaTeX</>}
-              </button>
-
-              <button onClick={handlePrint} className="flex items-center justify-center gap-2 bg-gray-200 text-gray-800 dark:bg-gray-800 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium shrink-0">
-                Print HTML
+                {isGeneratingLatex ? <><Loader2 size={16} className="animate-spin" /> ...</> : showLatexView ? <><LayoutTemplate size={16} /> View HTML Preview</> : <><FileText size={16} /> View LaTeX Code</>}
               </button>
 
               <button onClick={handleDownloadPDF} disabled={isCompilingPDF} className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shrink-0 disabled:opacity-50">
@@ -338,11 +334,6 @@ export default function ResumeBuilder() {
                         document.body.removeChild(element);
                     }} className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 text-sm font-bold flex items-center gap-1"><Download size={14} /> Download .tex</button>
                     
-                    <form action="https://latexonline.cc/compile" method="POST" target="_blank" className="m-0 p-0 inline-flex">
-                       <input type="hidden" name="text" value={generatedLatex} />
-                       <button type="submit" className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 text-sm font-bold flex items-center gap-1" title="Instantly compiles to PDF. Note: Uses an external public compiler."><Download size={14} /> PDF (Quick Compile)</button>
-                    </form>
-
                     <form action="https://www.overleaf.com/docs" method="POST" target="_blank" className="m-0 p-0 inline-flex">
                        <input type="hidden" name="snip" value={generatedLatex} />
                        <button type="submit" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-bold flex items-center gap-1"><LayoutTemplate size={14} /> Open in Overleaf</button>
@@ -361,11 +352,17 @@ export default function ResumeBuilder() {
                 />
               </div>
            ) : (
+            <>
+             <div className="mb-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-3 rounded-lg flex items-start gap-2 text-amber-800 dark:text-amber-300">
+               <Info size={18} className="shrink-0 mt-0.5" />
+               <p className="text-sm"><strong>Note:</strong> This HTML preview is an approximate structural representation. It may naturally differ from the final LaTeX layout. Click <strong>Download A4 PDF</strong> to compile the true LaTeX source.</p>
+             </div>
              <ResumeTemplate 
                content={generatedMd} 
                variant={latexTemplate as any} 
                fontStyle={latexFont.toLowerCase().includes('sans') ? 'sans' : latexFont.toLowerCase().includes('serif') ? 'serif' : latexFont.toLowerCase().includes('mono') ? 'mono' : 'sans'} 
              />
+            </>
            )}
         </div>
       </div>

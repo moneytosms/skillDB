@@ -18,19 +18,28 @@ async function startServer() {
         return res.status(400).json({ error: "LaTeX content is required" });
       }
 
-      // We'll post the form data to latexonline.cc
-      const formData = new URLSearchParams();
-      formData.append("text", latex);
+      // We'll create a tarball to upload to latexonline
+      const os = require('os');
+      const fs = require('fs');
+      const tar = require('tar');
+      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "latex-"));
+      const texPath = path.join(tmpDir, "main.tex");
+      const tarPath = path.join(tmpDir, "main.tar.gz");
+
+      fs.writeFileSync(texPath, latex);
+
+      await tar.c({ gzip: true, file: tarPath, cwd: tmpDir }, ["main.tex"]);
+
+      const buffer = fs.readFileSync(tarPath);
+      const form = new FormData();
+      form.append("file", new Blob([buffer], { type: "application/gzip" }), "main.tar.gz");
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
 
-      const response = await fetch("https://latexonline.cc/compile", {
+      const response = await fetch("https://latexonline.cc/data?target=main.tex&command=pdflatex", {
         method: "POST",
-        body: formData,
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
+        body: form,
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
@@ -38,11 +47,14 @@ async function startServer() {
       if (!response.ok) {
         const errorText = await response.text();
         console.error("LaTeX compilation failed:", errorText);
+        fs.rmSync(tmpDir, { recursive: true, force: true });
         return res.status(response.status).json({ error: "Compilation failed", details: errorText });
       }
 
       // Get the PDF as an arraybuffer
       const pdfBuffer = await response.arrayBuffer();
+
+      fs.rmSync(tmpDir, { recursive: true, force: true });
 
       // Send the PDF back to the client
       res.setHeader("Content-Type", "application/pdf");
