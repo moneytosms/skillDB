@@ -265,7 +265,7 @@ export async function extractProfileFromText(textContext: string, existingProfil
   }
 }
 
-export async function generateJSONResume(jobDescription: string, profileContext: string, docPrefs?: { docType: string; style: string; font: string; regenerationPrompt?: string }): Promise<string> {
+export async function generateJSONResume(jobDescription: string, profileContext: string, docPrefs?: { docType: string; style: string; font: string; regenerationPrompt?: string; currentResumeJson?: string }): Promise<string> {
   const { apiKeys, preferences } = useStore.getState();
   const provider = preferences.aiProvider || 'gemini';
   const model = preferences.aiModel || (provider === 'gemini' ? 'gemini-3.1-pro-preview' : 'llama-3.3-70b-versatile');
@@ -288,14 +288,31 @@ export async function generateJSONResume(jobDescription: string, profileContext:
     `;
 
     if (docPrefs.regenerationPrompt) {
-      prefInstructions += `
-      ======================================================================
-      >>> CRITICAL USER REGENERATION INSTRUCTIONS (HIGH PRIORITY) <<<
-      "${docPrefs.regenerationPrompt}"
-      
-      The user was NOT satisfied with the previous generation. You MUST drastically rewrite, reorganize, and adjust the content to explicitly satisfy the prompt above. DO NOT just copy-paste from the original context, and do NOT ignore this prompt. This is the MOST important instruction.
-      ======================================================================
-      `;
+      if (docPrefs.currentResumeJson) {
+        prefInstructions += `
+        ======================================================================
+        >>> CRITICAL REGENERATION INSTRUCTIONS (HIGH PRIORITY) <<<
+        The user has provided feedback to UPDATE the CURRENTLY GENERATED RESUME.
+        
+        CURRENT GENERATED RESUME (JSON):
+        ${docPrefs.currentResumeJson}
+        
+        USER FEEDBACK/PROMPT: "${docPrefs.regenerationPrompt}"
+        
+        You MUST start with the "CURRENT GENERATED RESUME" as your baseline state. Apply the user's feedback ("USER FEEDBACK/PROMPT") as an incremental update or modification on top of the current resume. DO NOT overwrite or drop items that were successfully added in previous iterations unless the user's prompt implies it. Retain changes from previous regenerations, and just fix/add/remove what the user specifically asked for now.
+        CRITICAL: The resulting updated resume MUST STILL strictly fit on ONE page. Be extremely brief and concise if you are adding new items, and feel free to slightly truncate older descriptions if necessary to maintain the one-page constraint.
+        ======================================================================
+        `;
+      } else {
+        prefInstructions += `
+        ======================================================================
+        >>> CRITICAL USER REGENERATION INSTRUCTIONS (HIGH PRIORITY) <<<
+        "${docPrefs.regenerationPrompt}"
+        
+        The user was NOT satisfied with the previous generation. You MUST drastically rewrite, reorganize, and adjust the content to explicitly satisfy the prompt above. DO NOT just copy-paste from the original context, and do NOT ignore this prompt. This is the MOST important instruction.
+        ======================================================================
+        `;
+      }
     }
   }
 
@@ -314,11 +331,11 @@ export async function generateJSONResume(jobDescription: string, profileContext:
   Please generate a polished, professional resume structured EXACTLY according to the following JSON schema. Do not output anything other than valid JSON. 
   
   CRITICAL INSTRUCTIONS:
-  1. The generated resume MUST fill the entire page. 
+  1. The generated resume MUST fit neatly on EXACTLY ONE PAGE. Do not overflow.
   2. You must curate and order the items carefully: select the most relevant experiences, projects, and skills for the job description. Prioritize and reorder bullets and sections to match the job listing's emphasis.
   3. ABSOLUTELY DO NOT simply copy-paste from the profile context. You MUST completely rewrite, reframe, and elevate every bullet point to directly speak to the job description and the user's regeneration prompt. Synthesize points where necessary so it reads as a highly professional targeted document. Ensure the phrasing uses strong action verbs, quantifiable metrics, and directly mirrors the target terminology.
   4. Tailor the wording heavily to mirror the job description's terminology, but MAINTAIN INTEGRITY (do not completely fabricate non-existent roles or degrees).
-  5. If there is not enough content to fill the page, creatively embellish existing details, expand on responsibilities, add plausible adjacent skills based on their profile, and include relevant miscellaneous/volunteer experiences to ensure the resume looks substantial, full, and perfectly suited to give the user a leg up.
+  5. Make sure the content is concise enough to fit on a single page. Try to keep descriptions to 2-3 bullets maximum for your most relevant experiences, and fewer for older ones. Filter out older or less relevant experience if necessary to stay closely on one page.
   6. The resume MUST sound like it represents the user perfectly and guarantees them the job. You are generating a final polished document so it should know what it is writing.
   7. When specifying technologies for projects, output them purely as a comma-separated array of strings. Do not precede them with "Technologies:".
 

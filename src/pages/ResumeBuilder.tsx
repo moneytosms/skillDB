@@ -79,9 +79,11 @@ export default function ResumeBuilder() {
         docType: latexDocType,
         style: latexStyle,
         font: latexFont,
-        regenerationPrompt
+        regenerationPrompt,
+        currentResumeJson: generatedMd || undefined
       });
       setGeneratedMd(jsonStr);
+      setRegenerationPrompt(''); // Clear prompt after successful generation
       saveResume({
         jobDescription: fullPromptContext,
         content: jsonStr,
