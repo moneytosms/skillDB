@@ -478,8 +478,9 @@ export async function generateLaTeXResume(
   - Document Type: ${documentType}
 
   Instruction: 
-  Adapt the chosen template to match the Style, Font, and Document Type selections perfectly using the JSON data.
-  IMPORTANT: If the Document Type includes a Cover Letter (or if there is a Cover Letter in the JSON), you MUST place the Cover Letter FIRST in the LaTeX document, then add a \newpage, and then place the Resume/CV content.
+  Adapt the chosen template below to output a COMPLETE, ready-to-compile LaTeX document from the JSON data.
+  The template provided includes the \\documentclass, preamble, and custom commands. Replace the '%% INSERT CONTENT HERE %%' blocks with the actual content using the commands defined in the template.
+  IMPORTANT: If the Document Type includes a Cover Letter (or if there is a Cover Letter in the JSON), you MUST place the Cover Letter FIRST in the LaTeX document, then add a \\newpage, and then place the Resume/CV content.
   Output the final, ready-to-compile LaTeX code in a single code block. Ensure the LaTeX code is complete, ATS-friendly, and has no missing brackets or broken syntax. Do not output anything outside the code block.
 
   JSON Resume Data:

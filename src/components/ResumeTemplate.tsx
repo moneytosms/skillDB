@@ -2,7 +2,7 @@ import React from 'react';
 import { Mail, Phone, MapPin, Linkedin, Github, Globe, Code } from 'lucide-react';
 import { cn } from '../lib/utils';
 
-export type TemplateVariant = 'standard' | 'modern' | 'executive' | 'compact';
+export type TemplateVariant = '1' | '2' | '3' | '4' | '5' | '6' | '7';
 export type FontStyle = 'sans' | 'serif' | 'mono';
 
 interface ResumeTemplateProps {
@@ -11,7 +11,7 @@ interface ResumeTemplateProps {
   fontStyle?: FontStyle;
 }
 
-export function ResumeTemplate({ content, variant = 'standard', fontStyle = 'sans' }: ResumeTemplateProps) {
+export function ResumeTemplate({ content, variant = '1', fontStyle = 'sans' }: ResumeTemplateProps) {
   let data;
   try {
     data = JSON.parse(content);
@@ -31,69 +31,63 @@ export function ResumeTemplate({ content, variant = 'standard', fontStyle = 'san
 
   const Header = () => {
     switch (variant) {
-      case 'modern':
+      case '3':
+        // Template 3: Left aligned, pipe separators, minimal
         return (
-          <div className="mb-2 pb-2 border-b-2 border-gray-800">
-            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight uppercase">{personalInfo.name || 'Your Name'}</h1>
-            <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs mt-1 text-gray-600">
-              {personalInfo.location && <span className="flex items-center gap-1"><MapPin size={10}/> {personalInfo.location}</span>}
-              {personalInfo.email && <span className="flex items-center gap-1"><Mail size={10}/> {personalInfo.email}</span>}
-              {personalInfo.phone && <span className="flex items-center gap-1"><Phone size={10}/> {personalInfo.phone}</span>}
-              {personalInfo.linkedin && <a href={personalInfo.linkedin} className="flex items-center gap-1 text-gray-600"><Linkedin size={10}/> LinkedIn</a>}
-              {personalInfo.github && <a href={personalInfo.github} className="flex items-center gap-1 text-gray-600"><Github size={10}/> GitHub</a>}
-              {personalInfo.leetcode && <a href={personalInfo.leetcode} className="flex items-center gap-1 text-gray-600"><Code size={10}/> LeetCode</a>}
-              {personalInfo.codeforces && <a href={personalInfo.codeforces} className="flex items-center gap-1 text-gray-600"><Code size={10}/> Codeforces</a>}
-            </div>
-          </div>
-        );
-      case 'executive':
-        return (
-          <div className="text-center mb-3 border-b border-black pb-2">
-            <h1 className="text-2xl lg:text-3xl font-bold mb-1 tracking-wide uppercase">{personalInfo.name || 'Your Name'}</h1>
-            <div className="flex flex-wrap justify-center gap-x-3 gap-y-0.5 text-xs text-black">
+          <div className="mb-4">
+            <h1 className="text-3xl font-bold text-gray-900 mb-1">{personalInfo.name || 'Your Name'}</h1>
+            <div className="flex flex-wrap text-sm text-gray-700 italic gap-2 items-center">
               {personalInfo.location && <span>{personalInfo.location}</span>}
-              {personalInfo.email && <span>{personalInfo.email}</span>}
-              {personalInfo.phone && <span>{personalInfo.phone}</span>}
-              {personalInfo.linkedin && <a href={personalInfo.linkedin}>LinkedIn</a>}
-              {personalInfo.github && <a href={personalInfo.github}>GitHub</a>}
-              {personalInfo.leetcode && <a href={personalInfo.leetcode}>LeetCode</a>}
-              {personalInfo.codeforces && <a href={personalInfo.codeforces}>Codeforces</a>}
-              {personalInfo.website && <a href={personalInfo.website}>Portfolio</a>}
+              {personalInfo.phone && <><span className="text-gray-400">|</span><span>{personalInfo.phone}</span></>}
+              {personalInfo.email && <><span className="text-gray-400">|</span><a href={`mailto:${personalInfo.email}`} className="text-blue-600 underline">@{personalInfo.email.split('@')[0]}</a></>}
+              {personalInfo.linkedin && <><span className="text-gray-400">|</span><a href={personalInfo.linkedin} className="text-blue-600 underline">@linkedin</a></>}
+              {personalInfo.github && <><span className="text-gray-400">|</span><a href={personalInfo.github} className="text-blue-600 underline">@github</a></>}
             </div>
           </div>
         );
-      case 'compact':
+      case '4':
+        // Template 4: Two-column header
         return (
-          <div className="text-center mb-2">
-            <h1 className="text-2xl font-bold -mb-1">{personalInfo.name || 'Your Name'}</h1>
-            <div className="flex flex-wrap justify-center gap-x-3 gap-y-0.5 text-[11px] mt-1 text-gray-800">
-              {personalInfo.location && <span>{personalInfo.location}</span>}
-              {personalInfo.email && <span>{personalInfo.email}</span>}
-              {personalInfo.phone && <span>{personalInfo.phone}</span>}
-              {personalInfo.linkedin && <a href={personalInfo.linkedin} className="text-black">LinkedIn</a>}
-              {personalInfo.github && <a href={personalInfo.github} className="text-black">GitHub</a>}
-              {personalInfo.leetcode && <a href={personalInfo.leetcode} className="text-black">LeetCode</a>}
-              {personalInfo.codeforces && <a href={personalInfo.codeforces} className="text-black">Codeforces</a>}
-              {personalInfo.website && <a href={personalInfo.website} className="text-black">Portfolio</a>}
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">{personalInfo.name || 'Your Name'}</h1>
+              <div className="text-sm mt-1">{personalInfo.location}</div>
+            </div>
+            <div className="text-right text-xs space-y-1">
+               {personalInfo.phone && <div className="flex justify-end items-center gap-1">{personalInfo.phone} <Phone size={12}/></div>}
+               {personalInfo.email && <div className="flex justify-end items-center gap-1"><a href={`mailto:${personalInfo.email}`} className="text-blue-600 underline">{personalInfo.email}</a> <Mail size={12}/></div>}
+               {personalInfo.github && <div className="flex justify-end items-center gap-1"><a href={personalInfo.github} className="text-blue-600 underline">GitHub</a> <Github size={12}/></div>}
+               {personalInfo.linkedin && <div className="flex justify-end items-center gap-1"><a href={personalInfo.linkedin} className="text-blue-600 underline">LinkedIn</a> <Linkedin size={12}/></div>}
             </div>
           </div>
         );
-      case 'standard':
+      case '6':
+        // Template 6: Red Accent Huge Centered
+        return (
+          <div className="text-center mb-6">
+            <h1 className="text-4xl font-bold text-red-800 mb-2">{personalInfo.name || 'Your Name'}</h1>
+            <div className="flex flex-wrap justify-center gap-x-2 text-sm text-gray-800">
+              {personalInfo.location && <span>{personalInfo.location}</span>}
+              {personalInfo.email && <><span className="text-red-800">|</span><a href={`mailto:${personalInfo.email}`}>{personalInfo.email}</a></>}
+              {personalInfo.phone && <><span className="text-red-800">|</span><span>{personalInfo.phone}</span></>}
+              {personalInfo.linkedin && <><span className="text-red-800">|</span><a href={personalInfo.linkedin}>LinkedIn</a></>}
+            </div>
+          </div>
+        );
+      case '2':
+      case '5':
+      case '1':
       default:
+        // Centered standard header
         return (
-          <div className="text-center mb-2">
-            <h1 className="text-2xl lg:text-3xl font-bold -mb-1">{personalInfo.name || 'Your Name'}</h1>
-            <div className="flex flex-wrap justify-center gap-x-3 gap-y-0.5 text-xs mt-1 text-gray-800">
-              {personalInfo.location && <span className="flex items-center gap-1"><MapPin size={10}/> {personalInfo.location}</span>}
-              {personalInfo.email && <span className="flex items-center gap-1"><Mail size={10}/> {personalInfo.email}</span>}
-              {personalInfo.phone && <span className="flex items-center gap-1"><Phone size={10}/> {personalInfo.phone}</span>}
-            </div>
-            <div className="flex flex-wrap justify-center gap-3 text-xs mt-0.5 text-gray-800">
-              {personalInfo.linkedin && <a href={personalInfo.linkedin} className="flex items-center gap-1 text-blue-700"><Linkedin size={10}/> LinkedIn</a>}
-              {personalInfo.github && <a href={personalInfo.github} className="flex items-center gap-1 text-blue-700"><Github size={10}/> GitHub</a>}
-              {personalInfo.leetcode && <a href={personalInfo.leetcode} className="flex items-center gap-1 text-blue-700"><Code size={10}/> LeetCode</a>}
-              {personalInfo.codeforces && <a href={personalInfo.codeforces} className="flex items-center gap-1 text-blue-700"><Code size={10}/> Codeforces</a>}
-              {personalInfo.website && <a href={personalInfo.website} className="flex items-center gap-1 text-blue-700"><Globe size={10}/> Portfolio</a>}
+          <div className="text-center mb-4">
+            <h1 className="text-3xl font-bold uppercase tracking-tight text-gray-900 mb-1">{personalInfo.name || 'Your Name'}</h1>
+            <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-sm text-gray-700">
+              {personalInfo.location && <span className="flex items-center gap-1"><MapPin size={12}/> {personalInfo.location}</span>}
+              {personalInfo.email && <span className="flex items-center gap-1"><Mail size={12}/> {personalInfo.email}</span>}
+              {personalInfo.phone && <span className="flex items-center gap-1"><Phone size={12}/> {personalInfo.phone}</span>}
+              {personalInfo.linkedin && <a href={personalInfo.linkedin} className="flex items-center gap-1"><Linkedin size={12}/> LinkedIn</a>}
+              {personalInfo.github && <a href={personalInfo.github} className="flex items-center gap-1"><Github size={12}/> GitHub</a>}
             </div>
           </div>
         );
@@ -102,31 +96,53 @@ export function ResumeTemplate({ content, variant = 'standard', fontStyle = 'san
 
   const SectionHeader = ({ title }: { title: string }) => {
     switch (variant) {
-      case 'modern':
-        return <h2 className="text-xs font-bold tracking-wide text-gray-900 bg-gray-100 py-0.5 px-2 mb-1 uppercase break-after-avoid">{title}</h2>;
-      case 'executive':
-        return <h2 className="text-[13px] font-bold tracking-widest text-black border-b border-black pb-0.5 mb-1 mt-2 uppercase break-after-avoid">{title}</h2>;
-      case 'compact':
-        return <h2 className="text-[12px] font-bold tracking-tight text-black border-b border-gray-400 pb-0 mb-1 mt-1 uppercase break-after-avoid">{title}</h2>;
-      case 'standard':
-      default:
+      case '3':
+        // Blue text, black rule
         return (
-          <div className="mb-1 mt-1.5 break-after-avoid">
-            <h2 className="text-[12px] font-bold tracking-widest text-slate-900 border-b border-black pb-0.5 mb-1 uppercase">
-              {title}
-            </h2>
+          <h2 className="text-lg font-bold uppercase tracking-wide text-blue-800 border-b-2 border-black pb-1 mb-3 mt-4">
+            {title}
+          </h2>
+        );
+      case '4':
+        // Gray tcolorbox
+        return (
+          <div className="bg-gray-200 py-1.5 px-3 mt-4 mb-3 rounded-sm font-bold uppercase tracking-wide text-gray-900">
+            {title}
           </div>
+        );
+      case '5':
+        // Blue primary background box
+        return (
+          <div className="bg-blue-800 text-white py-1.5 px-3 mt-4 mb-3 rounded-sm font-bold uppercase tracking-wide">
+            {title}
+          </div>
+        );
+      case '6':
+        // Red Accent, thick gray rule
+        return (
+          <h2 className="text-lg font-bold uppercase tracking-wider text-red-800 border-b-2 border-gray-300 pb-1 mb-3 mt-4">
+            {title}
+          </h2>
+        );
+      case '1':
+      case '2':
+      default:
+        // Standard large bold with rule
+        return (
+          <h2 className="text-lg font-bold uppercase tracking-wider text-gray-900 border-b-[1.5px] border-black pb-1 mb-3 mt-4">
+            {title}
+          </h2>
         );
     }
   };
 
-  const LayoutClass = variant === 'compact' 
-    ? "bg-white p-[0.4in] max-w-[850px] mx-auto min-h-[11in] text-black shadow-xl border border-gray-200 print:shadow-none print:border-none print:p-0 print:w-[210mm] print:h-auto text-[12px] leading-tight"
-    : "bg-white p-[0.5in] max-w-[850px] mx-auto min-h-[11in] text-black shadow-xl border border-gray-200 print:shadow-none print:border-none print:p-0 print:w-[210mm] print:h-auto text-[13px] leading-snug";
+  const LayoutClass = "bg-white p-[0.6in] max-w-[850px] mx-auto min-h-[11in] text-gray-900 shadow-xl border border-gray-200 print:shadow-none print:border-none print:p-0 print:w-full print:max-w-none print:h-auto text-[13px] leading-snug print:bg-transparent";
+
+  // Accent logic for template 6
+  const jobTitleColor = variant === '6' ? 'text-red-800' : 'text-gray-900';
 
   return (
     <div className={cn(LayoutClass, getFontFamily())}>
-      
       <Header />
 
       {/* Cover Letter */}
@@ -143,18 +159,25 @@ export function ResumeTemplate({ content, variant = 'standard', fontStyle = 'san
 
       {/* Experience */}
       {(experience?.length || 0) > 0 && (
-        <div className="mb-1">
+        <div className="mb-2">
           <SectionHeader title="EXPERIENCE" />
-          <div className={cn((variant === 'standard' || variant === 'compact') ? "pl-1" : "")}>
+          <div className="pl-0">
             {experience.map((exp: any, i: number) => (
-              <div key={i} className={cn(variant === 'compact' ? "mb-1" : "mb-2", "break-inside-avoid")}>
-                <div className="flex justify-between font-bold">
-                  <span>{exp.role} <span className="font-normal">— {exp.company}</span></span>
-                  <span className="font-normal italic text-xs">{exp.startDate} – {exp.endDate}</span>
+              <div key={i} className="mb-3 break-inside-avoid">
+                <div className="flex justify-between items-baseline font-bold mb-1">
+                  <div>
+                     <span className={cn(variant === '3' ? "bg-yellow-100" : "")}>{exp.role}</span>
+                     {variant === '3' ? (
+                       <span className="font-normal text-gray-700"> | {exp.company}</span>
+                     ) : (
+                       <span className="font-normal text-gray-700 italic ml-2">{exp.company}</span>
+                     )}
+                  </div>
+                  <span className="font-normal italic text-xs text-gray-600">{exp.startDate} – {exp.endDate}</span>
                 </div>
-                <ul className={cn("list-dash pl-4 mt-0.5 space-y-0.5", variant === 'compact' ? "text-[11px]" : "text-xs")}>
+                <ul className={cn("list-disc pl-5 mt-1 space-y-1 text-sm")}>
                   {exp.description?.map((bullet: string, j: number) => (
-                    <li key={j} className={cn("pl-1 relative before:absolute before:-left-3 before:top-0", variant === 'modern' ? "before:content-['•']" : "before:content-['–']")}>{bullet}</li>
+                    <li key={j}>{bullet}</li>
                   ))}
                 </ul>
               </div>
@@ -165,16 +188,19 @@ export function ResumeTemplate({ content, variant = 'standard', fontStyle = 'san
 
       {/* Projects */}
       {(projects?.length || 0) > 0 && (
-        <div className="mb-1">
+        <div className="mb-2">
           <SectionHeader title="PROJECTS" />
-          <div className={cn((variant === 'standard' || variant === 'compact') ? "pl-1" : "")}>
+          <div className="pl-0">
             {projects.map((proj: any, i: number) => (
-              <div key={i} className={cn(variant === 'compact' ? "mb-1" : "mb-1.5", "break-inside-avoid")}>
-                <div className="flex justify-between font-bold">
-                  <span>{proj.name} {proj.technologies && <span className="font-normal italic text-[11px] ml-1">({proj.technologies.join(', ')})</span>}</span>
-                  {proj.link && <a href={proj.link} className="text-blue-700 font-normal underline text-[11px]">View</a>}
+              <div key={i} className="mb-3 break-inside-avoid">
+                <div className="flex justify-between items-baseline font-bold mb-1">
+                  <div>
+                    <span className={cn(variant === '3' ? "bg-yellow-100" : "")}>{proj.name}</span>
+                    {proj.technologies && <span className="font-normal italic text-[11px] ml-2 text-gray-600">({proj.technologies.join(', ')})</span>}
+                  </div>
+                  {proj.link && <a href={proj.link} className="text-blue-700 font-normal underline text-xs">View</a>}
                 </div>
-                <div className={cn("mt-0", variant === 'compact' ? "text-[11px]" : "text-xs")}>
+                <div className="mt-1 text-sm">
                   {proj.description}
                 </div>
               </div>
@@ -185,18 +211,18 @@ export function ResumeTemplate({ content, variant = 'standard', fontStyle = 'san
 
       {/* Education */}
       {(education?.length || 0) > 0 && (
-        <div className="mb-1">
+        <div className="mb-2">
           <SectionHeader title="EDUCATION" />
-          <div className={cn((variant === 'standard' || variant === 'compact') ? "pl-1" : "")}>
+          <div className="pl-0">
             {education.map((edu: any, i: number) => (
-              <div key={i} className={cn(variant === 'compact' ? "mb-0.5" : "mb-1", "break-inside-avoid")}>
-                <div className="flex justify-between font-bold">
-                  <span>{edu.institution}</span>
-                  <span className="font-normal italic text-xs">{edu.startDate} – {edu.endDate}</span>
+              <div key={i} className="mb-3 break-inside-avoid">
+                <div className="flex justify-between items-baseline font-bold mb-1">
+                  <span className={cn(variant === '3' ? "bg-yellow-100" : "")}>{edu.institution}</span>
+                  <span className="font-normal italic text-xs text-gray-600">{edu.startDate} – {edu.endDate}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className={cn("italic", variant === 'compact' ? "text-[11px]" : "text-xs")}>{edu.degree}</span>
-                  <span className="text-[11px]">{edu.details}</span>
+                <div className="flex justify-between text-sm">
+                  <span className="italic">{edu.degree}</span>
+                  <span>{edu.details}</span>
                 </div>
               </div>
             ))}
@@ -206,15 +232,15 @@ export function ResumeTemplate({ content, variant = 'standard', fontStyle = 'san
 
       {/* Technical Skills */}
       {Object.keys(skills || {}).length > 0 && (
-        <div className="mb-1 break-inside-avoid">
+        <div className="mb-2 break-inside-avoid">
           <SectionHeader title="TECHNICAL SKILLS" />
-          <div className={cn((variant === 'standard' || variant === 'compact') ? "pl-1" : "")}>
-            <table className={cn("w-full", variant === 'compact' ? "text-[11px]" : "text-xs")}>
+          <div className="pl-0">
+            <table className="w-full text-sm">
               <tbody>
                 {Object.entries(skills).map(([category, items]: [string, any], i: number) => (
                   <tr key={i} className="align-top">
-                    <td className="w-28 font-bold py-0 pr-2">{category}:</td>
-                    <td className="py-0">{items}</td>
+                    <td className="w-36 font-bold py-1 pr-2">{category}:</td>
+                    <td className="py-1">{items}</td>
                   </tr>
                 ))}
               </tbody>
@@ -225,17 +251,17 @@ export function ResumeTemplate({ content, variant = 'standard', fontStyle = 'san
 
       {/* Certifications and Awards */}
       {((certifications?.length || 0) > 0 || (awards?.length || 0) > 0) && (
-        <div className="mb-1 break-inside-avoid">
+        <div className="mb-2 break-inside-avoid">
           <SectionHeader title="AWARDS & CERTIFICATIONS" />
-          <div className={cn((variant === 'standard' || variant === 'compact') ? "pl-1" : "")}>
-            <ul className={cn("list-dash pl-4 space-y-0.5", variant === 'compact' ? "text-[11px]" : "text-xs")}>
+          <div className="pl-0">
+            <ul className="list-disc pl-5 mt-1 space-y-1 text-sm">
               {awards?.map((award: string, i: number) => (
-                 <li key={`a-${i}`} className={cn("pl-1 relative before:absolute before:-left-3 before:top-0", variant === 'modern' ? "before:content-['•']" : "before:content-['–']")}>{award}</li>
+                 <li key={`a-${i}`}>{award}</li>
               ))}
               {certifications?.map((cert: any, i: number) => (
-                 <li key={`c-${i}`} className={cn("pl-1 relative before:absolute before:-left-3 before:top-0", variant === 'modern' ? "before:content-['•']" : "before:content-['–']")}>
+                 <li key={`c-${i}`}>
                    <span className="font-bold">{cert.name}</span> — {cert.issuer}
-                   {cert.link && <a href={cert.link} className="text-blue-700 ml-2">Verify</a>}
+                   {cert.link && <a href={cert.link} className="text-blue-700 ml-2 text-xs underline">Verify</a>}
                  </li>
               ))}
             </ul>

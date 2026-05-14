@@ -119,7 +119,7 @@ export default function ResumeBuilder() {
 
   if (generatedMd) {
     return (
-      <div className="h-full flex flex-col bg-[#FAFAFA] dark:bg-[#0A0A0A]">
+      <div className="h-full flex flex-col bg-[#FAFAFA] dark:bg-[#0A0A0A] print:h-auto print:bg-white print:dark:bg-white">
         <div className="no-print bg-white dark:bg-[#141414] border-b border-[#E5E5E5] dark:border-gray-800 p-4 flex flex-col sm:flex-row justify-between sm:items-start sticky top-0 z-10 gap-4">
           <div className="flex-1 w-full max-w-xl min-w-0 mr-4 mt-1 flex items-center">
              <input 
@@ -138,7 +138,7 @@ export default function ResumeBuilder() {
               <div className="flex items-center bg-gray-100 dark:bg-gray-800 py-1.5 px-3 rounded-lg border border-gray-200 dark:border-gray-700 flex-1 sm:flex-none">
                  <select 
                    value={latexTemplate} 
-                   onChange={(e) => setLatexTemplate(e.target.value)}
+                   onChange={(e) => { setLatexTemplate(e.target.value); setGeneratedLatex(''); setShowLatexView(false); }}
                    className="bg-transparent text-sm w-full outline-none text-gray-800 dark:text-gray-200 max-w-[150px] truncate"
                  >
                    <option value="1">Temp 1 (Tech)</option>
@@ -153,7 +153,7 @@ export default function ResumeBuilder() {
 
               <div className="flex items-center bg-gray-100 dark:bg-gray-800 py-1.5 px-3 rounded-lg border border-gray-200 dark:border-gray-700 flex-1 sm:flex-none">
                  <select 
-                   value={latexStyle} onChange={(e) => setLatexStyle(e.target.value)}
+                   value={latexStyle} onChange={(e) => { setLatexStyle(e.target.value); setGeneratedLatex(''); setShowLatexView(false); }}
                    className="bg-transparent text-sm w-full outline-none text-gray-800 dark:text-gray-200 max-w-[150px] truncate"
                  >
                    <option value="Minimalist & Clean">Minimalist</option>
@@ -165,7 +165,7 @@ export default function ResumeBuilder() {
 
               <div className="flex items-center bg-gray-100 dark:bg-gray-800 py-1.5 px-3 rounded-lg border border-gray-200 dark:border-gray-700 flex-1 sm:flex-none">
                  <select 
-                   value={latexFont} onChange={(e) => setLatexFont(e.target.value)}
+                   value={latexFont} onChange={(e) => { setLatexFont(e.target.value); setGeneratedLatex(''); setShowLatexView(false); }}
                    className="bg-transparent text-sm w-full outline-none text-gray-800 dark:text-gray-200 max-w-[130px] truncate"
                  >
                    <option value="Serif">Serif</option>
@@ -178,7 +178,7 @@ export default function ResumeBuilder() {
 
               <div className="flex items-center bg-gray-100 dark:bg-gray-800 py-1.5 px-3 rounded-lg border border-gray-200 dark:border-gray-700 flex-1 sm:flex-none">
                  <select 
-                   value={latexDocType} onChange={(e) => setLatexDocType(e.target.value)}
+                   value={latexDocType} onChange={(e) => { setLatexDocType(e.target.value); setGeneratedLatex(''); setShowLatexView(false); }}
                    className="bg-transparent text-sm w-full outline-none text-gray-800 dark:text-gray-200 max-w-[150px] truncate"
                  >
                    <option value="Resume">Resume</option>
@@ -193,7 +193,7 @@ export default function ResumeBuilder() {
               <div className="flex w-full mt-2">
                  <textarea 
                    value={customLatexTemplate}
-                   onChange={(e) => setCustomLatexTemplate(e.target.value)}
+                   onChange={(e) => { setCustomLatexTemplate(e.target.value); setGeneratedLatex(''); setShowLatexView(false); }}
                    className="w-full min-h-[60px] bg-white dark:bg-[#1A1A1A] border border-blue-200 dark:border-blue-800/50 rounded-lg p-2 text-gray-800 dark:text-gray-200 text-xs font-mono outline-none focus:border-blue-500 resize-y"
                    placeholder="Paste \\documentclass{article}..."
                  />
@@ -246,7 +246,7 @@ export default function ResumeBuilder() {
           </div>
         </div>
         
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 relative">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 relative print:p-0 print:overflow-visible print:block">
            {isEditingJson ? (
              <div className="max-w-[850px] mx-auto h-full flex flex-col">
                <div className="flex justify-between items-center mb-2">
@@ -287,6 +287,17 @@ export default function ResumeBuilder() {
                         element.click();
                         document.body.removeChild(element);
                     }} className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 text-sm font-bold flex items-center gap-1"><Download size={14} /> Download .tex</button>
+                    
+                    <form action="https://latexonline.cc/compile" method="POST" target="_blank" className="m-0 p-0 inline-flex">
+                       <input type="hidden" name="text" value={generatedLatex} />
+                       <button type="submit" className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 text-sm font-bold flex items-center gap-1" title="Instantly compiles to PDF. Note: Uses an external public compiler."><Download size={14} /> PDF (Quick Compile)</button>
+                    </form>
+
+                    <form action="https://www.overleaf.com/docs" method="POST" target="_blank" className="m-0 p-0 inline-flex">
+                       <input type="hidden" name="snip" value={generatedLatex} />
+                       <button type="submit" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-bold flex items-center gap-1"><LayoutTemplate size={14} /> Open in Overleaf</button>
+                    </form>
+
                     <button onClick={() => {
                         navigator.clipboard.writeText(generatedLatex);
                         alert("LaTeX copied to clipboard!");
@@ -302,7 +313,7 @@ export default function ResumeBuilder() {
            ) : (
              <ResumeTemplate 
                content={generatedMd} 
-               variant={latexTemplate === '2' ? 'modern' : latexTemplate === '3' ? 'executive' : latexTemplate === '4' ? 'compact' : 'standard'} 
+               variant={latexTemplate as any} 
                fontStyle={latexFont.toLowerCase().includes('sans') ? 'sans' : latexFont.toLowerCase().includes('serif') ? 'serif' : latexFont.toLowerCase().includes('mono') ? 'mono' : 'sans'} 
              />
            )}
