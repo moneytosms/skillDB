@@ -13,14 +13,20 @@ const cleanJSON = (text: string) => {
   return cleaned.trim();
 };
 
-const executeWithRotation = async (providerName: string, keysString: string | undefined | null, operation: (key: string) => Promise<any>) => {
-  let keys = (keysString || '').split(',').map(k => k.trim()).filter(k => k.length > 0);
+const executeWithRotation = async (providerName: string, keysInput: any, operation: (key: string) => Promise<any>) => {
+  let keys: string[] = [];
+  if (typeof keysInput === 'string') {
+    keys = keysInput.split(',').map((k: string) => k.trim()).filter((k: string) => k.length > 0);
+  } else if (Array.isArray(keysInput)) {
+    keys = keysInput.map(k => typeof k === 'string' ? k.trim() : (k.key || '').trim()).filter(k => k.length > 0);
+  }
+
   if (providerName === 'gemini' && keys.length === 0) {
      const envKey = process.env.GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY;
      if (envKey) keys = envKey.split(',').map((k: string) => k.trim()).filter((k: string) => k.length > 0);
   }
   
-  if (keys.length === 0) throw new Error(`No ${providerName.toUpperCase()} API key found. Please add it in settings (comma-separated for rotation).`);
+  if (keys.length === 0) throw new Error(`No ${providerName.toUpperCase()} API key found. Please add it in settings.`);
   
   // Shuffle the keys to balance load
   let availableKeys = [...keys].sort(() => Math.random() - 0.5);

@@ -78,7 +78,7 @@ ${getFontPackage(fontStyle)}
 \\newcommand{\\resumeSubheading}[4]{
 \\vspace{1pt}\\item
 \\begin{tabular*}{1.0\\textwidth}[t]{ l@{\\extracolsep{\\fill}}r}
-\\textbf{#1}\\hspace{2mm}\\textit{#3} & \\textit{\\small #2} \\\\
+\\textbf{#1}\\hspace{2mm}\\textit{#3} \\textit{\\footnotesize #4} & \\textit{\\small #2} \\\\
 \\end{tabular*}\\vspace{-5pt}
 }
 \\newcommand{\\resumeProjectHeading}[4]{
@@ -151,7 +151,7 @@ ${getFontPackage(fontStyle)}
 \\newcommand{\\resumeSubheading}[4]{
   \\vspace{1pt}\\item
     \\begin{tabular*}{1.0\\textwidth}[t]{l@{\\extracolsep{\\fill}}r}
-      \\textbf{#1}\\hspace{2mm}\\textit{\\small #3} & \\textit{\\small #2} \\\\
+      \\textbf{#1}\\hspace{2mm}\\textit{\\small #3} \\textit{\\footnotesize #4} & \\textit{\\small #2} \\\\
     \\end{tabular*}\\vspace{-5pt}
 }
 \\newcommand{\\resumeProjectHeading}[4]{
@@ -213,7 +213,7 @@ ${getFontPackage(fontStyle)}
 \\newcommand{\\resumeSubheading}[4]{
 \\vspace{2pt}\\item
 \\begin{tabular*}{1.0\\textwidth}[t]{ l@{\\extracolsep{\\fill}}r}
-\\colorbox{lightyellow}{\\textbf{#1}} $|$ \\textit{#3} & \\textit{\\small #2}\\\\
+\\colorbox{lightyellow}{\\textbf{#1}} $|$ \\textit{#3} \\textit{\\footnotesize #4} & \\textit{\\small #2}\\\\
 \\end{tabular*}\\vspace{-5pt}
 }
 \\newcommand{\\resumeProjectHeading}[4]{
@@ -288,7 +288,7 @@ arc=2pt,outer arc=2pt,
 \\newcommand{\\resumeSubheading}[4]{
 \\vspace{1.5mm}\\item
 \\begin{tabular*}{1.0\\textwidth}[t]{ l@{\\extracolsep{\\fill}}r}
-\\textbf{#1}\\hspace{2mm}\\textit{\\footnotesize{#3}} & \\textit{\\footnotesize{#2}} \\\\
+\\textbf{#1}\\hspace{2mm}\\textit{\\footnotesize{#3}} \\textit{\\footnotesize #4} & \\textit{\\footnotesize{#2}} \\\\
 \\end{tabular*}
 \\vspace{-3mm}
 }
@@ -358,7 +358,7 @@ ${getFontPackage(fontStyle)}
 \\newcommand{\\resumeSubheading}[4]{
 \\vspace{1pt}\\item
 \\begin{tabular*}{1.0\\textwidth}[t]{ l@{\\extracolsep{\\fill}}r}
-\\textbf{#1}\\hspace{2mm}\\textit{\\small #3} & \\textit{\\small #2} \\\\
+\\textbf{#1}\\hspace{2mm}\\textit{\\small #3} \\textit{\\footnotesize #4} & \\textit{\\small #2} \\\\
 \\end{tabular*}\\vspace{-5pt}
 }
 \\newcommand{\\resumeProjectHeading}[4]{
@@ -407,7 +407,7 @@ ${getFontPackage(fontStyle)}
 \\newcommand{\\resumeSubheading}[4]{
 \\vspace{1pt}\\item
 \\begin{tabular*}{1.0\\textwidth}[t]{ l@{\\extracolsep{\\fill}}r}
-\\textbf{#1}\\hspace{2mm}\\textit{\\small #3} & \\textbf{\\color{accent}\\small #2} \\\\
+\\textbf{#1}\\hspace{2mm}\\textit{\\small #3} \\textit{\\footnotesize #4} & \\textbf{\\color{accent}\\small #2} \\\\
 \\end{tabular*}\\vspace{-5pt}
 }
 \\newcommand{\\resumeProjectHeading}[4]{
@@ -478,7 +478,12 @@ ${getFontPackage(fontStyle)}
   if (education && education.length > 0) {
     latexCode += `${sectionCmd}{EDUCATION}\n\\resumeSubHeadingList\n`;
     education.forEach((edu: any) => {
-        latexCode += `  \\resumeSubheading{${esc(edu.institution)}}{${esc(edu.startDate)} -- ${esc(edu.endDate)}}{${esc(edu.degree)}}{${esc(edu.details)}}\n`;
+        const detailsParts = [
+            edu.cgpa ? `CGPA: ${esc(edu.cgpa)}` : null,
+            edu.percentage ? `Percentage: ${esc(edu.percentage)}` : null,
+            edu.details ? esc(edu.details) : null
+        ].filter(Boolean).join(' | ');
+        latexCode += `  \\resumeSubheading{${esc(edu.institution)}}{${esc(edu.startDate)} -- ${esc(edu.endDate)}}{${esc(edu.degree)}}{${detailsParts}}\n`;
     });
     latexCode += `\\resumeSubHeadingListEnd\n\n`;
   }

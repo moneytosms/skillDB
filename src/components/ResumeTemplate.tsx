@@ -200,9 +200,11 @@ export function ResumeTemplate({ content, variant = '1', fontStyle = 'sans' }: R
                   </div>
                   {proj.link && <a href={proj.link} className="text-blue-700 font-normal underline text-xs">View</a>}
                 </div>
-                <div className="mt-1 text-sm">
-                  {proj.description}
-                </div>
+                {proj.description && (
+                  <ul className="list-disc pl-5 mt-1 space-y-1 text-sm">
+                    <li>{proj.description}</li>
+                  </ul>
+                )}
               </div>
             ))}
           </div>
@@ -217,12 +219,18 @@ export function ResumeTemplate({ content, variant = '1', fontStyle = 'sans' }: R
             {education.map((edu: any, i: number) => (
               <div key={i} className="mb-3 break-inside-avoid">
                 <div className="flex justify-between items-baseline font-bold mb-1">
-                  <span className={cn(variant === '3' ? "bg-yellow-100" : "")}>{edu.institution}</span>
+                  <div>
+                    <span className={cn(variant === '3' ? "bg-yellow-100" : "")}>{edu.institution}</span>
+                    <span className="font-normal italic text-[13px] text-gray-700 ml-2">{edu.degree}</span>
+                    <span className="font-normal text-xs text-gray-500 ml-2">
+                      {[
+                        edu.cgpa ? `CGPA: ${edu.cgpa}` : null,
+                        edu.percentage ? `${edu.percentage}` : null,
+                        edu.details ? edu.details : null
+                      ].filter(Boolean).join(' | ')}
+                    </span>
+                  </div>
                   <span className="font-normal italic text-xs text-gray-600">{edu.startDate} – {edu.endDate}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="italic">{edu.degree}</span>
-                  <span>{edu.details}</span>
                 </div>
               </div>
             ))}

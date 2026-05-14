@@ -1,10 +1,51 @@
 import { useState, useEffect } from 'react';
-import { useStore, AppPreferences, PROVIDER_MODELS } from '../store/useStore';
-import { Download, Upload, Save, Shield, FileJson, Moon, Sun, Cpu, AlertTriangle } from 'lucide-react';
+import { useStore, AppPreferences, PROVIDER_MODELS, ApiKeyItem } from '../store/useStore';
+import { Download, Upload, Save, Shield, FileJson, Moon, Sun, Cpu, AlertTriangle, Plus, Trash2, Key, Eye, EyeOff } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
+
+const migrateToStructured = (apiKeysParam: any) => {
+  const defaultKeys: any = { gemini: [], openai: [], anthropic: [], groq: [] };
+  for (const key of ['gemini', 'openai', 'anthropic', 'groq']) {
+      const val = apiKeysParam[key];
+      if (typeof val === 'string') {
+        defaultKeys[key] = val.split(',').map(k => k.trim()).filter(k => k.length > 0).map(k => ({ id: uuidv4(), name: 'Legacy Key', key: k }));
+      } else if (Array.isArray(val)) {
+        defaultKeys[key] = val;
+      }
+  }
+  return defaultKeys;
+};
 
 export default function Settings() {
   const { apiKeys, updateApiKeys, profile, resumes, importData, preferences, updatePreferences, resetStore } = useStore();
-  const [keysState, setKeysState] = useState(apiKeys);
+  const [keysState, setKeysState] = useState<Record<string, ApiKeyItem[]>>(migrateToStructured(apiKeys));
+  const [activeProvider, setActiveProvider] = useState<string>('gemini');
+  const [visibleKeys, setVisibleKeys] = useState<Record<string, boolean>>({});
+
+  const toggleKeyVisibility = (id: string) => {
+    setVisibleKeys(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const addKey = () => {
+    setKeysState(prev => ({
+      ...prev,
+      [activeProvider]: [...prev[activeProvider], { id: uuidv4(), name: `Key ${prev[activeProvider].length + 1}`, key: '' }]
+    }));
+  };
+
+  const removeKey = (id: string) => {
+    setKeysState(prev => ({
+      ...prev,
+      [activeProvider]: prev[activeProvider].filter((k: ApiKeyItem) => k.id !== id)
+    }));
+  };
+
+  const updateKey = (id: string, field: 'name' | 'key', value: string) => {
+    setKeysState(prev => ({
+      ...prev,
+      [activeProvider]: prev[activeProvider].map((k: ApiKeyItem) => k.id === id ? { ...k, [field]: value } : k)
+    }));
+  };
 
   const handleSaveKeys = () => {
     updateApiKeys(keysState);
@@ -34,7 +75,7 @@ export default function Settings() {
         const json = JSON.parse(e.target?.result as string);
         if (window.confirm('Are you sure you want to overwrite your current data? This cannot be undone.')) {
           importData(json);
-          setKeysState(json.apiKeys || { gemini: '', openai: '', anthropic: '', groq: '' });
+          setKeysState(migrateToStructured(json.apiKeys || { gemini: '', openai: '', anthropic: '', groq: '' }));
           alert('Data imported successfully!');
         }
       } catch (err) {
@@ -54,7 +95,7 @@ export default function Settings() {
   const handleReset = () => {
     if (window.confirm('Are you absolutely sure you want to delete ALL data? This includes your profile, resumes, API keys, and backups. This action cannot be undone.')) {
       resetStore();
-      setKeysState({ gemini: '', openai: '', anthropic: '', groq: '' });
+      setKeysState(migrateToStructured({ gemini: '', openai: '', anthropic: '', groq: '' }));
       alert('All data has been reset.');
     }
   };
@@ -126,62 +167,96 @@ export default function Settings() {
 
       <section className="mb-12">
         <div className="flex items-center gap-2 mb-4">
-          <Shield className="text-blue-600 dark:text-blue-400" size={24} />
+          <Key className="text-blue-600 dark:text-blue-400" size={24} />
           <h2 className="text-xl font-semibold">API Keys (Local Storage)</h2>
         </div>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-          Your keys are saved directly in your browser's local storage. You can provide multiple comma-separated keys for a provider to enable auto-rotation (fallback) in case of rate limits or depleted credits!
+          Your keys are saved directly in your browser's local storage. We highly <strong className="text-black dark:text-white font-semibold">recommend adding multiple API keys per provider</strong> to enable auto-rotation. If one key hits a rate limit or depletes credits, the app will automatically try the next one!
         </p>
 
-        <div className="bg-white dark:bg-[#1A1A1A] border border-[#E5E5E5] dark:border-gray-800 rounded-xl p-6 shadow-sm space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Gemini API Key</label>
-            <input 
-              type="password" 
-              value={keysState.gemini || ''} 
-              onChange={(e) => setKeysState({...keysState, gemini: e.target.value})}
-              placeholder="AIzaSy..."
-              className="w-full border border-gray-300 dark:border-gray-700 bg-transparent rounded-md p-2 font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            />
+        <div className="bg-white dark:bg-[#1A1A1A] border border-[#E5E5E5] dark:border-gray-800 rounded-xl p-6 shadow-sm flex flex-col md:flex-row gap-6">
+          {/* Sidebar for selecting providers */}
+          <div className="md:w-48 flex-shrink-0 flex flex-col gap-2">
+             {[
+               { id: 'gemini', label: 'Google Gemini' },
+               { id: 'openai', label: 'OpenAI' },
+               { id: 'anthropic', label: 'Anthropic' },
+               { id: 'groq', label: 'Groq (Llama)' }
+             ].map(provider => (
+                <button
+                  key={provider.id}
+                  onClick={() => setActiveProvider(provider.id)}
+                  className={`text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${activeProvider === provider.id ? 'bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
+                >
+                  {provider.label}
+                </button>
+             ))}
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">OpenAI API Key</label>
-            <input 
-              type="password" 
-              value={keysState.openai || ''} 
-              onChange={(e) => setKeysState({...keysState, openai: e.target.value})}
-              placeholder="sk-proj-..."
-              className="w-full border border-gray-300 dark:border-gray-700 bg-transparent rounded-md p-2 font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Anthropic API Key</label>
-            <input 
-              type="password" 
-              value={keysState.anthropic || ''} 
-              onChange={(e) => setKeysState({...keysState, anthropic: e.target.value})}
-              placeholder="sk-ant-..."
-              className="w-full border border-gray-300 dark:border-gray-700 bg-transparent rounded-md p-2 font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Groq API Key</label>
-            <input 
-              type="password" 
-              value={keysState.groq || ''} 
-              onChange={(e) => setKeysState({...keysState, groq: e.target.value})}
-              placeholder="gsk_..."
-              className="w-full border border-gray-300 dark:border-gray-700 bg-transparent rounded-md p-2 font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            />
-          </div>
+          
+          <div className="flex-1 flex flex-col">
+            <div className="flex justify-between items-center mb-4">
+               <h3 className="text-lg font-medium capitalize">{activeProvider} Keys</h3>
+               <button 
+                 onClick={addKey}
+                 className="flex items-center gap-1.5 text-sm font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-black dark:text-white px-3 py-1.5 rounded-md transition-colors"
+               >
+                 <Plus size={16} /> Add Key
+               </button>
+            </div>
+            
+            <div className="space-y-3 mb-6 flex-1 max-h-[300px] overflow-y-auto pr-2">
+              {keysState[activeProvider]?.length === 0 ? (
+                 <div className="text-center py-8 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-xl">
+                   <p className="text-gray-500 dark:text-gray-400 text-sm">No keys added for {activeProvider} yet.</p>
+                 </div>
+              ) : (
+                keysState[activeProvider]?.map((k) => (
+                  <div key={k.id} className="flex gap-3 bg-gray-50 dark:bg-[#111111] border border-[#E5E5E5] dark:border-gray-800 rounded-lg p-3 group items-start">
+                    <div className="flex-1 space-y-3">
+                      <div className="flex gap-3">
+                        <input 
+                          type="text" 
+                          value={k.name}
+                          onChange={(e) => updateKey(k.id, 'name', e.target.value)}
+                          placeholder="e.g. Free Tier Key 1"
+                          className="w-1/3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#1A1A1A] rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        />
+                        <div className="relative flex-1">
+                          <input 
+                            type={visibleKeys[k.id] ? "text" : "password"}
+                            value={k.key}
+                            onChange={(e) => updateKey(k.id, 'key', e.target.value)}
+                            placeholder="API Key..."
+                            className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#1A1A1A] rounded-md p-2 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none pr-10"
+                          />
+                          <button
+                            onClick={() => toggleKeyVisibility(k.id)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                          >
+                            {visibleKeys[k.id] ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => removeKey(k.id)}
+                      className="text-gray-400 hover:text-red-500 transition-colors p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-800"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
 
-          <div className="pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-end">
-            <button 
-              onClick={handleSaveKeys}
-              className="flex items-center gap-2 bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-md hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors text-sm font-medium"
-            >
-              <Save size={16} /> Save Keys
-            </button>
+            <div className="pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-end">
+              <button 
+                onClick={handleSaveKeys}
+                className="flex items-center gap-2 bg-black dark:bg-white text-white dark:text-black px-5 py-2 rounded-md hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors text-sm font-medium"
+              >
+                <Save size={16} /> Save All Keys
+              </button>
+            </div>
           </div>
         </div>
       </section>

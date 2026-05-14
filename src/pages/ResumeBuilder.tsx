@@ -39,20 +39,27 @@ export default function ResumeBuilder() {
       return;
     }
     
+    const hasKeys = (keys: any) => {
+      if (!keys) return false;
+      if (typeof keys === 'string') return keys.trim().length > 0;
+      if (Array.isArray(keys)) return keys.length > 0 && keys.some(k => k.key.trim().length > 0);
+      return false;
+    };
+
     // Check if API key is present
-    if (preferences.aiProvider === 'gemini' && !apiKeys.gemini && !(import.meta as any).env?.VITE_GEMINI_API_KEY && !process.env.GEMINI_API_KEY) {
+    if (preferences.aiProvider === 'gemini' && !hasKeys(apiKeys.gemini) && !(import.meta as any).env?.VITE_GEMINI_API_KEY && !process.env.GEMINI_API_KEY) {
       setError('No Gemini API key found. Please add it in Settings.');
       return;
     }
-    if (preferences.aiProvider === 'groq' && !apiKeys.groq) {
+    if (preferences.aiProvider === 'groq' && !hasKeys(apiKeys.groq)) {
       setError('No Groq API key found. Please add it in Settings.');
       return;
     }
-    if (preferences.aiProvider === 'openai' && !apiKeys.openai) {
+    if (preferences.aiProvider === 'openai' && !hasKeys(apiKeys.openai)) {
       setError('No OpenAI API key found. Please add it in Settings.');
       return;
     }
-    if (preferences.aiProvider === 'anthropic' && !apiKeys.anthropic) {
+    if (preferences.aiProvider === 'anthropic' && !hasKeys(apiKeys.anthropic)) {
       setError('No Anthropic API key found. Please add it in Settings.');
       return;
     }
@@ -101,9 +108,12 @@ export default function ResumeBuilder() {
   };
 
   const handleDownloadPDF = useReactToPrint({
-    content: () => resumeRef.current,
+    contentRef: resumeRef,
     documentTitle: `${profile.personalInfo.name ? profile.personalInfo.name.replace(/\s+/g, '_') : 'resume'}`,
-    onBeforePrint: () => setIsCompilingPDF(true),
+    onBeforePrint: () => new Promise<void>((resolve) => {
+      setIsCompilingPDF(true);
+      resolve();
+    }),
     onAfterPrint: () => setIsCompilingPDF(false),
   });
 
