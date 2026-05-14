@@ -3,13 +3,15 @@ import { Mail, Phone, MapPin, Linkedin, Github, Globe, Code } from 'lucide-react
 import { cn } from '../lib/utils';
 
 export type TemplateVariant = 'standard' | 'modern' | 'executive' | 'compact';
+export type FontStyle = 'sans' | 'serif' | 'mono';
 
 interface ResumeTemplateProps {
   content: string; // JSON string
   variant?: TemplateVariant;
+  fontStyle?: FontStyle;
 }
 
-export function ResumeTemplate({ content, variant = 'standard' }: ResumeTemplateProps) {
+export function ResumeTemplate({ content, variant = 'standard', fontStyle = 'sans' }: ResumeTemplateProps) {
   let data;
   try {
     data = JSON.parse(content);
@@ -20,11 +22,10 @@ export function ResumeTemplate({ content, variant = 'standard' }: ResumeTemplate
   const { personalInfo = {}, education = [], experience = [], projects = [], skills = {}, certifications = [], awards = [] } = data;
 
   const getFontFamily = () => {
-    switch (variant) {
-      case 'modern': return 'font-sans';
-      case 'executive': return 'font-serif';
-      case 'compact': return 'font-sans';
-      case 'standard': default: return 'font-sans';
+    switch (fontStyle) {
+      case 'serif': return 'font-serif';
+      case 'mono': return 'font-mono';
+      case 'sans': default: return 'font-sans';
     }
   };
 
@@ -33,7 +34,7 @@ export function ResumeTemplate({ content, variant = 'standard' }: ResumeTemplate
       case 'modern':
         return (
           <div className="mb-2 pb-2 border-b-2 border-gray-800">
-            <h1 className="text-2xl lg:text-3xl font-bold font-sans text-gray-900 tracking-tight uppercase">{personalInfo.name || 'Your Name'}</h1>
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight uppercase">{personalInfo.name || 'Your Name'}</h1>
             <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs mt-1 text-gray-600">
               {personalInfo.location && <span className="flex items-center gap-1"><MapPin size={10}/> {personalInfo.location}</span>}
               {personalInfo.email && <span className="flex items-center gap-1"><Mail size={10}/> {personalInfo.email}</span>}
@@ -48,7 +49,7 @@ export function ResumeTemplate({ content, variant = 'standard' }: ResumeTemplate
       case 'executive':
         return (
           <div className="text-center mb-3 border-b border-black pb-2">
-            <h1 className="text-2xl lg:text-3xl font-bold font-serif mb-1 tracking-wide uppercase">{personalInfo.name || 'Your Name'}</h1>
+            <h1 className="text-2xl lg:text-3xl font-bold mb-1 tracking-wide uppercase">{personalInfo.name || 'Your Name'}</h1>
             <div className="flex flex-wrap justify-center gap-x-3 gap-y-0.5 text-xs text-black">
               {personalInfo.location && <span>{personalInfo.location}</span>}
               {personalInfo.email && <span>{personalInfo.email}</span>}
@@ -64,7 +65,7 @@ export function ResumeTemplate({ content, variant = 'standard' }: ResumeTemplate
       case 'compact':
         return (
           <div className="text-center mb-2">
-            <h1 className="text-2xl font-bold font-serif -mb-1">{personalInfo.name || 'Your Name'}</h1>
+            <h1 className="text-2xl font-bold -mb-1">{personalInfo.name || 'Your Name'}</h1>
             <div className="flex flex-wrap justify-center gap-x-3 gap-y-0.5 text-[11px] mt-1 text-gray-800">
               {personalInfo.location && <span>{personalInfo.location}</span>}
               {personalInfo.email && <span>{personalInfo.email}</span>}
@@ -81,7 +82,7 @@ export function ResumeTemplate({ content, variant = 'standard' }: ResumeTemplate
       default:
         return (
           <div className="text-center mb-2">
-            <h1 className="text-2xl lg:text-3xl font-bold font-serif -mb-1">{personalInfo.name || 'Your Name'}</h1>
+            <h1 className="text-2xl lg:text-3xl font-bold -mb-1">{personalInfo.name || 'Your Name'}</h1>
             <div className="flex flex-wrap justify-center gap-x-3 gap-y-0.5 text-xs mt-1 text-gray-800">
               {personalInfo.location && <span className="flex items-center gap-1"><MapPin size={10}/> {personalInfo.location}</span>}
               {personalInfo.email && <span className="flex items-center gap-1"><Mail size={10}/> {personalInfo.email}</span>}
@@ -102,16 +103,16 @@ export function ResumeTemplate({ content, variant = 'standard' }: ResumeTemplate
   const SectionHeader = ({ title }: { title: string }) => {
     switch (variant) {
       case 'modern':
-        return <h2 className="text-xs font-bold font-sans tracking-wide text-gray-900 bg-gray-100 py-0.5 px-2 mb-1 uppercase">{title}</h2>;
+        return <h2 className="text-xs font-bold tracking-wide text-gray-900 bg-gray-100 py-0.5 px-2 mb-1 uppercase">{title}</h2>;
       case 'executive':
-        return <h2 className="text-[13px] font-bold font-serif tracking-widest text-black border-b border-black pb-0.5 mb-1 mt-2 uppercase">{title}</h2>;
+        return <h2 className="text-[13px] font-bold tracking-widest text-black border-b border-black pb-0.5 mb-1 mt-2 uppercase">{title}</h2>;
       case 'compact':
-        return <h2 className="text-[12px] font-bold font-serif tracking-tight text-black border-b border-gray-400 pb-0 mb-1 mt-1 uppercase">{title}</h2>;
+        return <h2 className="text-[12px] font-bold tracking-tight text-black border-b border-gray-400 pb-0 mb-1 mt-1 uppercase">{title}</h2>;
       case 'standard':
       default:
         return (
           <div className="mb-1 mt-1.5">
-            <h2 className="text-[12px] font-bold font-serif tracking-widest text-slate-900 border-b border-black pb-0.5 mb-1 uppercase">
+            <h2 className="text-[12px] font-bold tracking-widest text-slate-900 border-b border-black pb-0.5 mb-1 uppercase">
               {title}
             </h2>
           </div>
