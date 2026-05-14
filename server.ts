@@ -22,13 +22,18 @@ async function startServer() {
       const formData = new URLSearchParams();
       formData.append("text", latex);
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
+
       const response = await fetch("https://latexonline.cc/compile", {
         method: "POST",
         body: formData,
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -41,7 +46,7 @@ async function startServer() {
 
       // Send the PDF back to the client
       res.setHeader("Content-Type", "application/pdf");
-      res.setHeader("Content-Disposition", "attachment; inline=resume.pdf");
+      res.setHeader("Content-Disposition", 'attachment; filename="resume.pdf"');
       res.send(Buffer.from(pdfBuffer));
     } catch (err: any) {
       console.error("/api/compile-latex Error:", err);

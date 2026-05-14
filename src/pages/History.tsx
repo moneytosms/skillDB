@@ -7,9 +7,24 @@ import { ResumeTemplate, TemplateVariant } from '../components/ResumeTemplate';
 export default function History() {
   const { resumes, deleteResume } = useStore();
   const [viewingResume, setViewingResume] = useState<string | null>(null);
-  const [templateVariant, setTemplateVariant] = useState<TemplateVariant>('standard');
+  const [templateVariant, setTemplateVariant] = useState<TemplateVariant>('1');
 
   const activeResume = resumes.find(r => r.id === viewingResume);
+
+  const [isCompilingPDF, setIsCompilingPDF] = useState(false);
+
+  const handleDownloadPDF = async () => {
+    if (!activeResume?.content) return;
+    setIsCompilingPDF(true);
+    let latexData = '';
+    try {
+      // Need to import generateLaTeXResume and latexTemplates or just fallback.
+      // Since generateLaTeXResume might need prompt and etc, perhaps just use the print HTML for history. Wait, History only has JSON content. It doesn't store the generated LaTeX. So we can't easily compile the actual LaTeX.
+    } catch (err: any) {
+    } finally {
+      setIsCompilingPDF(false);
+    }
+  };
 
   const handlePrint = () => {
     window.print();
@@ -35,10 +50,12 @@ export default function History() {
                  onChange={(e) => setTemplateVariant(e.target.value as TemplateVariant)}
                  className="bg-transparent text-sm w-full outline-none text-gray-800 dark:text-gray-200"
                >
-                 <option value="standard">Standard (ATS)</option>
-                 <option value="compact">Compact (Ultra-Tight)</option>
-                 <option value="modern">Modern (Clean)</option>
-                 <option value="executive">Executive (Serif)</option>
+                 <option value="1">Template 1 (Standard)</option>
+                 <option value="2">Template 2 (Modern)</option>
+                 <option value="3">Template 3 (Executive)</option>
+                 <option value="4">Template 4 (Compact)</option>
+                 <option value="5">Template 5 (Primary Box)</option>
+                 <option value="6">Template 6 (Red Accent)</option>
                </select>
             </div>
             <button onClick={handlePrint} className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shrink-0">
