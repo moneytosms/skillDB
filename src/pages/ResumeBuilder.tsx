@@ -27,6 +27,7 @@ export default function ResumeBuilder() {
   const [generatedLatex, setGeneratedLatex] = useState('');
   const [showLatexView, setShowLatexView] = useState(false);
   const [regenerationPrompt, setRegenerationPrompt] = useState('');
+  const [isCompilingPDF, setIsCompilingPDF] = useState(false);
 
   // also grab resumes from store
   const { resumes, deleteResume } = useStore();
@@ -110,6 +111,51 @@ export default function ResumeBuilder() {
       alert(err.message || 'LaTeX Generation failed');
     } finally {
       setIsGeneratingLatex(false);
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!generatedMd) return;
+    setIsCompilingPDF(true);
+    let latexData = generatedLatex;
+    try {
+      if (!latexData) {
+        const baseCode = latexTemplate === '7' ? customLatexTemplate : LATEX_TEMPLATES[latexTemplate];
+        latexData = await generateLaTeXResume(
+          generatedMd,
+          latexTemplate,
+          latexStyle,
+          latexFont,
+          latexDocType,
+          baseCode || ''
+        );
+        setGeneratedLatex(latexData);
+      }
+
+      const response = await fetch('/api/compile-latex', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ latex: latexData })
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to compile PDF. It might be due to a LaTeX template error.');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${profile.personalInfo.name ? profile.personalInfo.name.replace(/\s+/g, '_') : 'resume'}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err: any) {
+      alert(err.message || 'Error downloading PDF');
+    } finally {
+      setIsCompilingPDF(false);
     }
   };
 
@@ -239,8 +285,12 @@ export default function ResumeBuilder() {
                 {isGeneratingLatex ? <><Loader2 size={16} className="animate-spin" /> ...</> : showLatexView ? <><LayoutTemplate size={16} /> Show Visual</> : <><FileText size={16} /> Export to LaTeX</>}
               </button>
 
-              <button onClick={handlePrint} className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shrink-0">
-                <Download size={16} /> Save PDF
+              <button onClick={handlePrint} className="flex items-center justify-center gap-2 bg-gray-200 text-gray-800 dark:bg-gray-800 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium shrink-0">
+                Print HTML
+              </button>
+
+              <button onClick={handleDownloadPDF} disabled={isCompilingPDF} className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shrink-0 disabled:opacity-50">
+                {isCompilingPDF ? <><Loader2 size={16} className="animate-spin" /> Compiling...</> : <><Download size={16} /> Download A4 PDF</>}
               </button>
             </div>
           </div>
