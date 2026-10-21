@@ -1,8 +1,16 @@
-# skillDB
+<h1 align="center">skillDB</h1>
+
+<p align="center">
+  <img src="./assets/readme/hero.svg" width="100%" alt="skillDB: a privacy-first career vault in your browser. Paste a job description, get a tailored LaTeX resume.">
+</p>
 
 skillDB is a privacy-first resume and skills management platform that lives in your browser.
 
 It acts as a personal career vault, storing all your experiences, projects, education, and skills. When you find a job you want to apply for, simply paste the job description, and skillDB uses AI (via your own local API keys) to generate a highly tailored, ATS-friendly LaTeX resume.
+
+<p align="center">
+  <img src="./assets/readme/flow.svg" width="100%" alt="Your local profile vault and a pasted job description go to your own AI key, producing a LaTeX resume as A4 PDF, .tex source or Overleaf project.">
+</p>
 
 ## Features
 
@@ -18,6 +26,15 @@ It acts as a personal career vault, storing all your experiences, projects, educ
 - **Light & Dark Mode**: A beautiful interface inspired by modern design principles.
 
 ## Getting Started
+
+Run it locally (Node.js required):
+
+```bash
+npm install
+npm run dev   # http://localhost:3000
+```
+
+Then, in the app:
 
 1. Go to the Settings page and enter the API keys for the AI providers you wish to use.
 2. Select your preferred AI Provider and Model in the Settings.

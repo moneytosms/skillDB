@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" role="img" aria-labelledby="t d">
+  <title id="t">How skillDB builds a resume</title>
+  <desc id="d">Your local profile vault and a pasted job description go to the AI provider you configured with your own key, producing a tailored LaTeX resume you can download as PDF, download as .tex, or open in Overleaf.</desc>
+  <rect width="1200" height="300" rx="26" fill="#f4f7fd"/>
+  <rect x="0.5" y="0.5" width="1199" height="299" rx="25.5" fill="none" stroke="#d3def3"/>
+  <g font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" text-anchor="middle">
+    <g stroke="#2563EB" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M300 100 H340 V150 H400"/><path d="M300 200 H340 V150"/>
+      <path d="M640 150 H700"/>
+      <path d="M900 150 H940 V80 H980"/><path d="M940 150 H980"/><path d="M940 150 V220 H980"/>
+    </g>
+    <rect x="60" y="64" width="240" height="72" rx="14" fill="#ffffff" stroke="#d3def3"/><text x="180" y="96" font-size="22" font-weight="700" fill="#141414">Profile vault</text><text x="180" y="122" font-size="16" fill="#5b6f94">kept in your browser</text>
+    <rect x="60" y="164" width="240" height="72" rx="14" fill="#ffffff" stroke="#d3def3"/><text x="180" y="196" font-size="22" font-weight="700" fill="#141414">Job description</text><text x="180" y="222" font-size="16" fill="#5b6f94">pasted in</text>
+    <rect x="400" y="110" width="240" height="80" rx="14" fill="#2563EB"/><text x="520" y="144" font-size="22" font-weight="700" fill="#ffffff">Your AI key</text><text x="520" y="170" font-size="16" fill="#dbe7ff">four providers</text>
+    <rect x="700" y="110" width="200" height="80" rx="14" fill="#ffffff" stroke="#2563EB" stroke-width="2"/><text x="800" y="144" font-size="22" font-weight="700" fill="#141414">LaTeX resume</text><text x="800" y="170" font-size="16" fill="#5b6f94">one page, ATS-friendly</text>
+    <g font-size="18" fill="#141414">
+      <rect x="980" y="56" width="170" height="48" rx="10" fill="#ffffff" stroke="#d3def3"/><text x="1065" y="86">A4 PDF</text>
+      <rect x="980" y="126" width="170" height="48" rx="10" fill="#ffffff" stroke="#d3def3"/><text x="1065" y="156">.tex source</text>
+      <rect x="980" y="196" width="170" height="48" rx="10" fill="#ffffff" stroke="#d3def3"/><text x="1065" y="226">Overleaf</text>
+    </g>
+  </g>
+</svg>
